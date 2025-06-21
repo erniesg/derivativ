@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '../components/Navigation';
-import { Play, BookOpen, FileText, Video, ChevronRight, Clock, Star, Pen, Type, Eraser, Send, Volume2, Pause, SkipForward, MousePointer, X } from 'lucide-react';
+import { Play, BookOpen, FileText, Video, ChevronRight, Clock, Star, Pen, Type, Eraser, Send, Volume2, Pause, SkipForward, MousePointer, X, Edit3 } from 'lucide-react';
 
 interface LearningModule {
   id: string;
@@ -35,6 +35,13 @@ interface TextElement {
   color: string;
 }
 
+interface DrawingPath {
+  id: string;
+  path: Array<{x: number, y: number}>;
+  color: string;
+  width: number;
+}
+
 const Learn: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
@@ -42,18 +49,20 @@ const Learn: React.FC = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [quizAnswer, setQuizAnswer] = useState('');
-  const [workAreaMode, setWorkAreaMode] = useState<'draw' | 'text' | 'select'>('draw');
+  const [workAreaMode, setWorkAreaMode] = useState<'text' | 'draw' | 'select'>('text'); // Text as default
   const [isDrawing, setIsDrawing] = useState(false);
   const [showPersonalizedVideos, setShowPersonalizedVideos] = useState(false);
   
   // Enhanced work area state
   const [textElements, setTextElements] = useState<TextElement[]>([]);
+  const [drawingPaths, setDrawingPaths] = useState<DrawingPath[]>([]);
+  const [currentPath, setCurrentPath] = useState<Array<{x: number, y: number}>>([]);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [selectedElementType, setSelectedElementType] = useState<'text' | 'drawing' | null>(null);
   const [isAddingText, setIsAddingText] = useState(false);
   const [textInputPosition, setTextInputPosition] = useState({ x: 0, y: 0 });
   const [currentTextInput, setCurrentTextInput] = useState('');
-  const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
-  const [drawingPaths, setDrawingPaths] = useState<Array<{id: string, path: Array<{x: number, y: number}>, color: string, width: number}>>([]);
-  const [currentPath, setCurrentPath] = useState<Array<{x: number, y: number}>>([]);
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
@@ -137,7 +146,7 @@ const Learn: React.FC = () => {
 
   useEffect(() => {
     redrawCanvas();
-  }, [textElements, drawingPaths]);
+  }, [textElements, drawingPaths, selectedElementId, selectedElementType]);
 
   const redrawCanvas = () => {
     const canvas = canvasRef.current;
@@ -153,8 +162,10 @@ const Learn: React.FC = () => {
     drawingPaths.forEach(pathData => {
       if (pathData.path.length > 1) {
         ctx.beginPath();
-        ctx.strokeStyle = pathData.color;
-        ctx.lineWidth = pathData.width;
+        ctx.strokeStyle = selectedElementId === pathData.id && selectedElementType === 'drawing' 
+          ? '#3B82F6' : pathData.color;
+        ctx.lineWidth = selectedElementId === pathData.id && selectedElementType === 'drawing' 
+          ? pathData.width + 2 : pathData.width;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
@@ -168,65 +179,118 @@ const Learn: React.FC = () => {
 
     // Draw all text elements
     textElements.forEach(textEl => {
-      ctx.font = `${textEl.fontSize}px Arial`;
-      ctx.fillStyle = textEl.color;
-      ctx.fillText(textEl.text, textEl.x, textEl.y);
-      
-      // Draw selection border if selected
-      if (selectedTextId === textEl.id) {
-        const metrics = ctx.measureText(textEl.text);
-        ctx.strokeStyle = '#3B82F6';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(textEl.x - 2, textEl.y - textEl.fontSize - 2, metrics.width + 4, textEl.fontSize + 4);
+      if (editingTextId !== textEl.id) {
+        ctx.font = `${textEl.fontSize}px Arial`;
+        ctx.fillStyle = textEl.color;
+        ctx.fillText(textEl.text, textEl.x, textEl.y);
+        
+        // Draw selection border if selected
+        if (selectedElementId === textEl.id && selectedElementType === 'text') {
+          const metrics = ctx.measureText(textEl.text);
+          ctx.strokeStyle = '#3B82F6';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.strokeRect(textEl.x - 4, textEl.y - textEl.fontSize - 2, metrics.width + 8, textEl.fontSize + 6);
+          ctx.setLineDash([]);
+        }
       }
     });
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getCanvasCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  };
+
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const { x, y } = getCanvasCoordinates(e);
 
     if (workAreaMode === 'text') {
-      setIsAddingText(true);
-      setTextInputPosition({ x, y });
-      setCurrentTextInput('');
-      setTimeout(() => {
-        textInputRef.current?.focus();
-      }, 0);
+      startTextInput(x, y);
     } else if (workAreaMode === 'select') {
-      const clickedText = textElements.find(textEl => {
-        const canvas = canvasRef.current;
-        if (!canvas) return false;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return false;
-        
-        ctx.font = `${textEl.fontSize}px Arial`;
-        const metrics = ctx.measureText(textEl.text);
-        
-        return x >= textEl.x && x <= textEl.x + metrics.width &&
-               y >= textEl.y - textEl.fontSize && y <= textEl.y;
-      });
+      selectElementAt(x, y);
+    }
+  };
+
+  const startTextInput = (x: number, y: number) => {
+    setIsAddingText(true);
+    setTextInputPosition({ x, y });
+    setCurrentTextInput('');
+    setEditingTextId(null);
+    setTimeout(() => {
+      textInputRef.current?.focus();
+    }, 0);
+  };
+
+  const selectElementAt = (x: number, y: number) => {
+    // Check text elements first
+    const clickedText = textElements.find(textEl => {
+      const canvas = canvasRef.current;
+      if (!canvas) return false;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return false;
       
-      setSelectedTextId(clickedText ? clickedText.id : null);
+      ctx.font = `${textEl.fontSize}px Arial`;
+      const metrics = ctx.measureText(textEl.text);
+      
+      return x >= textEl.x - 4 && x <= textEl.x + metrics.width + 4 &&
+             y >= textEl.y - textEl.fontSize - 2 && y <= textEl.y + 4;
+    });
+
+    if (clickedText) {
+      setSelectedElementId(clickedText.id);
+      setSelectedElementType('text');
+      return;
+    }
+
+    // Check drawing paths
+    const clickedPath = drawingPaths.find(pathData => {
+      return pathData.path.some(point => {
+        const distance = Math.sqrt(Math.pow(x - point.x, 2) + Math.pow(y - point.y, 2));
+        return distance <= pathData.width + 5; // 5px tolerance
+      });
+    });
+
+    if (clickedPath) {
+      setSelectedElementId(clickedPath.id);
+      setSelectedElementType('drawing');
+    } else {
+      setSelectedElementId(null);
+      setSelectedElementType(null);
     }
   };
 
   const handleTextInputSubmit = () => {
     if (currentTextInput.trim()) {
-      const newTextElement: TextElement = {
-        id: Date.now().toString(),
-        x: textInputPosition.x,
-        y: textInputPosition.y,
-        text: currentTextInput,
-        fontSize: 16,
-        color: '#374151'
-      };
-      
-      setTextElements(prev => [...prev, newTextElement]);
+      if (editingTextId) {
+        // Update existing text
+        setTextElements(prev => prev.map(el => 
+          el.id === editingTextId 
+            ? { ...el, text: currentTextInput }
+            : el
+        ));
+        setEditingTextId(null);
+      } else {
+        // Add new text
+        const newTextElement: TextElement = {
+          id: Date.now().toString(),
+          x: textInputPosition.x,
+          y: textInputPosition.y,
+          text: currentTextInput,
+          fontSize: 16,
+          color: '#374151'
+        };
+        setTextElements(prev => [...prev, newTextElement]);
+      }
     }
     
     setIsAddingText(false);
@@ -239,6 +303,34 @@ const Learn: React.FC = () => {
     } else if (e.key === 'Escape') {
       setIsAddingText(false);
       setCurrentTextInput('');
+      setEditingTextId(null);
+    }
+  };
+
+  const editSelectedText = () => {
+    if (selectedElementId && selectedElementType === 'text') {
+      const textElement = textElements.find(el => el.id === selectedElementId);
+      if (textElement) {
+        setEditingTextId(textElement.id);
+        setCurrentTextInput(textElement.text);
+        setTextInputPosition({ x: textElement.x, y: textElement.y });
+        setIsAddingText(true);
+        setTimeout(() => {
+          textInputRef.current?.focus();
+        }, 0);
+      }
+    }
+  };
+
+  const deleteSelected = () => {
+    if (selectedElementId) {
+      if (selectedElementType === 'text') {
+        setTextElements(prev => prev.filter(el => el.id !== selectedElementId));
+      } else if (selectedElementType === 'drawing') {
+        setDrawingPaths(prev => prev.filter(path => path.id !== selectedElementId));
+      }
+      setSelectedElementId(null);
+      setSelectedElementType(null);
     }
   };
 
@@ -281,13 +373,7 @@ const Learn: React.FC = () => {
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (workAreaMode !== 'draw') return;
     
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-
+    const { x, y } = getCanvasCoordinates(e);
     setIsDrawing(true);
     setCurrentPath([{ x, y }]);
   };
@@ -295,15 +381,11 @@ const Learn: React.FC = () => {
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || workAreaMode !== 'draw') return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-
+    const { x, y } = getCanvasCoordinates(e);
     setCurrentPath(prev => [...prev, { x, y }]);
 
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -323,7 +405,7 @@ const Learn: React.FC = () => {
 
   const stopDrawing = () => {
     if (isDrawing && currentPath.length > 1) {
-      const newPath = {
+      const newPath: DrawingPath = {
         id: Date.now().toString(),
         path: currentPath,
         color: '#374151',
@@ -339,16 +421,11 @@ const Learn: React.FC = () => {
   const clearWorkArea = () => {
     setTextElements([]);
     setDrawingPaths([]);
-    setSelectedTextId(null);
+    setSelectedElementId(null);
+    setSelectedElementType(null);
     setIsAddingText(false);
+    setEditingTextId(null);
     redrawCanvas();
-  };
-
-  const deleteSelected = () => {
-    if (selectedTextId) {
-      setTextElements(prev => prev.filter(el => el.id !== selectedTextId));
-      setSelectedTextId(null);
-    }
   };
 
   const getCursorStyle = () => {
@@ -488,20 +565,9 @@ const Learn: React.FC = () => {
             {activeModuleData.hasCanvas && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Interactive Practice Area</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Practice Area</h3>
                   <div className="flex items-center space-x-2">
                     <div className="flex bg-gray-100 rounded-lg p-1">
-                      <button
-                        onClick={() => setWorkAreaMode('draw')}
-                        className={`flex items-center space-x-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                          workAreaMode === 'draw'
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-600 hover:text-gray-800'
-                        }`}
-                      >
-                        <Pen size={14} />
-                        <span>Draw</span>
-                      </button>
                       <button
                         onClick={() => setWorkAreaMode('text')}
                         className={`flex items-center space-x-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
@@ -512,6 +578,17 @@ const Learn: React.FC = () => {
                       >
                         <Type size={14} />
                         <span>Text</span>
+                      </button>
+                      <button
+                        onClick={() => setWorkAreaMode('draw')}
+                        className={`flex items-center space-x-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          workAreaMode === 'draw'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                      >
+                        <Pen size={14} />
+                        <span>Draw</span>
                       </button>
                       <button
                         onClick={() => setWorkAreaMode('select')}
@@ -526,7 +603,16 @@ const Learn: React.FC = () => {
                       </button>
                     </div>
                     
-                    {selectedTextId && (
+                    {selectedElementId && selectedElementType === 'text' && (
+                      <button
+                        onClick={editSelectedText}
+                        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Edit3 size={18} />
+                      </button>
+                    )}
+                    
+                    {selectedElementId && (
                       <button
                         onClick={deleteSelected}
                         className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
@@ -565,36 +651,45 @@ const Learn: React.FC = () => {
                       onChange={(e) => setCurrentTextInput(e.target.value)}
                       onKeyDown={handleTextInputKeyDown}
                       onBlur={handleTextInputSubmit}
-                      className="absolute bg-transparent border-none outline-none text-gray-700 font-sans"
+                      className="absolute bg-white border-2 border-blue-500 rounded px-2 py-1 text-gray-700 font-sans shadow-lg"
                       style={{
                         left: `${(textInputPosition.x / 400) * 100}%`,
-                        top: `${((textInputPosition.y - 16) / 300) * 100}%`,
+                        top: `${((textInputPosition.y - 20) / 300) * 100}%`,
                         fontSize: '16px',
-                        minWidth: '100px'
+                        minWidth: '120px',
+                        zIndex: 10
                       }}
                       placeholder="Type here..."
                     />
                   )}
                 </div>
 
-                <div className="mt-4 text-sm text-gray-500">
-                  {workAreaMode === 'draw' && (
-                    <p className="flex items-center">
-                      <Pen size={14} className="mr-2" />
-                      Draw mode: Click and drag to draw
-                    </p>
-                  )}
-                  {workAreaMode === 'text' && (
-                    <p className="flex items-center">
-                      <Type size={14} className="mr-2" />
-                      Text mode: Click anywhere to add text
-                    </p>
-                  )}
-                  {workAreaMode === 'select' && (
-                    <p className="flex items-center">
-                      <MousePointer size={14} className="mr-2" />
-                      Select mode: Click on text to select
-                    </p>
+                <div className="mt-4 space-y-2">
+                  <div className="text-sm text-gray-500">
+                    {workAreaMode === 'text' && (
+                      <p className="flex items-center">
+                        <Type size={14} className="mr-2 text-blue-500" />
+                        <strong>Text mode:</strong> Click anywhere to add text
+                      </p>
+                    )}
+                    {workAreaMode === 'draw' && (
+                      <p className="flex items-center">
+                        <Pen size={14} className="mr-2 text-green-500" />
+                        <strong>Draw mode:</strong> Click and drag to draw
+                      </p>
+                    )}
+                    {workAreaMode === 'select' && (
+                      <p className="flex items-center">
+                        <MousePointer size={14} className="mr-2 text-purple-500" />
+                        <strong>Select mode:</strong> Click on elements to select
+                      </p>
+                    )}
+                  </div>
+                  
+                  {selectedElementId && (
+                    <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
+                      {selectedElementType === 'text' ? 'Text selected' : 'Drawing selected'}
+                    </div>
                   )}
                 </div>
 
