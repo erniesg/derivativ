@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '../components/Navigation';
-import { Play, BookOpen, FileText, Video, ChevronRight, Clock, Star, Pen, Type, Eraser, Send, Volume2, Pause, SkipForward } from 'lucide-react';
+import { Play, BookOpen, FileText, Video, ChevronRight, Clock, Star, Pen, Type, Eraser, Send, Volume2, Pause, SkipForward, MousePointer, X } from 'lucide-react';
 
 interface LearningModule {
   id: string;
@@ -26,6 +26,15 @@ interface PersonalizedVideo {
   tailoredFor: string;
 }
 
+interface TextElement {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  fontSize: number;
+  color: string;
+}
+
 const Learn: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
@@ -33,12 +42,21 @@ const Learn: React.FC = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [quizAnswer, setQuizAnswer] = useState('');
-  const [workAreaMode, setWorkAreaMode] = useState<'draw' | 'type'>('draw');
-  const [workAreaText, setWorkAreaText] = useState('');
+  const [workAreaMode, setWorkAreaMode] = useState<'draw' | 'text' | 'select'>('draw');
   const [isDrawing, setIsDrawing] = useState(false);
   const [showPersonalizedVideos, setShowPersonalizedVideos] = useState(false);
   
+  // Enhanced work area state
+  const [textElements, setTextElements] = useState<TextElement[]>([]);
+  const [isAddingText, setIsAddingText] = useState(false);
+  const [textInputPosition, setTextInputPosition] = useState({ x: 0, y: 0 });
+  const [currentTextInput, setCurrentTextInput] = useState('');
+  const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
+  const [drawingPaths, setDrawingPaths] = useState<Array<{id: string, path: Array<{x: number, y: number}>, color: string, width: number}>>([]);
+  const [currentPath, setCurrentPath] = useState<Array<{x: number, y: number}>>([]);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
 
   const topics = ['Algebra', 'Geometry', 'Trigonometry', 'Statistics', 'Number Theory'];
   
@@ -118,17 +136,111 @@ const Learn: React.FC = () => {
   ];
 
   useEffect(() => {
+    redrawCanvas();
+  }, [textElements, drawingPaths]);
+
+  const redrawCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#374151';
-    ctx.lineWidth = 2;
-  }, [activeModule]);
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw all paths
+    drawingPaths.forEach(pathData => {
+      if (pathData.path.length > 1) {
+        ctx.beginPath();
+        ctx.strokeStyle = pathData.color;
+        ctx.lineWidth = pathData.width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        ctx.moveTo(pathData.path[0].x, pathData.path[0].y);
+        pathData.path.forEach(point => {
+          ctx.lineTo(point.x, point.y);
+        });
+        ctx.stroke();
+      }
+    });
+
+    // Draw all text elements
+    textElements.forEach(textEl => {
+      ctx.font = `${textEl.fontSize}px Arial`;
+      ctx.fillStyle = textEl.color;
+      ctx.fillText(textEl.text, textEl.x, textEl.y);
+      
+      // Draw selection border if selected
+      if (selectedTextId === textEl.id) {
+        const metrics = ctx.measureText(textEl.text);
+        ctx.strokeStyle = '#3B82F6';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(textEl.x - 2, textEl.y - textEl.fontSize - 2, metrics.width + 4, textEl.fontSize + 4);
+      }
+    });
+  };
+
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+    if (workAreaMode === 'text') {
+      setIsAddingText(true);
+      setTextInputPosition({ x, y });
+      setCurrentTextInput('');
+      setTimeout(() => {
+        textInputRef.current?.focus();
+      }, 0);
+    } else if (workAreaMode === 'select') {
+      const clickedText = textElements.find(textEl => {
+        const canvas = canvasRef.current;
+        if (!canvas) return false;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return false;
+        
+        ctx.font = `${textEl.fontSize}px Arial`;
+        const metrics = ctx.measureText(textEl.text);
+        
+        return x >= textEl.x && x <= textEl.x + metrics.width &&
+               y >= textEl.y - textEl.fontSize && y <= textEl.y;
+      });
+      
+      setSelectedTextId(clickedText ? clickedText.id : null);
+    }
+  };
+
+  const handleTextInputSubmit = () => {
+    if (currentTextInput.trim()) {
+      const newTextElement: TextElement = {
+        id: Date.now().toString(),
+        x: textInputPosition.x,
+        y: textInputPosition.y,
+        text: currentTextInput,
+        fontSize: 16,
+        color: '#374151'
+      };
+      
+      setTextElements(prev => [...prev, newTextElement]);
+    }
+    
+    setIsAddingText(false);
+    setCurrentTextInput('');
+  };
+
+  const handleTextInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTextInputSubmit();
+    } else if (e.key === 'Escape') {
+      setIsAddingText(false);
+      setCurrentTextInput('');
+    }
+  };
 
   const filteredModules = learningModules.filter(module => {
     const topicMatch = selectedTopic === 'all' || module.topic === selectedTopic;
@@ -141,8 +253,7 @@ const Learn: React.FC = () => {
     setVideoProgress(0);
     setIsVideoPlaying(false);
     setQuizAnswer('');
-    setWorkAreaText('');
-    clearCanvas();
+    clearWorkArea();
   };
 
   const closeModule = () => {
@@ -154,7 +265,6 @@ const Learn: React.FC = () => {
   const toggleVideo = () => {
     setIsVideoPlaying(!isVideoPlaying);
     if (!isVideoPlaying) {
-      // Simulate video progress
       const interval = setInterval(() => {
         setVideoProgress(prev => {
           if (prev >= 100) {
@@ -170,8 +280,16 @@ const Learn: React.FC = () => {
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (workAreaMode !== 'draw') return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
     setIsDrawing(true);
-    draw(e);
+    setCurrentPath([{ x, y }]);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -180,38 +298,66 @@ const Learn: React.FC = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+    setCurrentPath(prev => [...prev, { x, y }]);
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#374151';
+    ctx.lineWidth = 2;
+    
+    if (currentPath.length > 0) {
+      const lastPoint = currentPath[currentPath.length - 1];
+      ctx.beginPath();
+      ctx.moveTo(lastPoint.x, lastPoint.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
   };
 
   const stopDrawing = () => {
+    if (isDrawing && currentPath.length > 1) {
+      const newPath = {
+        id: Date.now().toString(),
+        path: currentPath,
+        color: '#374151',
+        width: 2
+      };
+      setDrawingPaths(prev => [...prev, newPath]);
+    }
+    
     setIsDrawing(false);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.beginPath();
+    setCurrentPath([]);
   };
 
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const clearWorkArea = () => {
+    setTextElements([]);
+    setDrawingPaths([]);
+    setSelectedTextId(null);
+    setIsAddingText(false);
+    redrawCanvas();
+  };
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  const deleteSelected = () => {
+    if (selectedTextId) {
+      setTextElements(prev => prev.filter(el => el.id !== selectedTextId));
+      setSelectedTextId(null);
+    }
+  };
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const getCursorStyle = () => {
+    switch (workAreaMode) {
+      case 'text': return 'cursor-text';
+      case 'draw': return 'cursor-crosshair';
+      case 'select': return 'cursor-pointer';
+      default: return 'cursor-default';
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -240,7 +386,6 @@ const Learn: React.FC = () => {
         <Navigation />
         
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Module Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{activeModuleData.title}</h1>
@@ -255,9 +400,7 @@ const Learn: React.FC = () => {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8">
-            {/* Video/Content Area */}
             <div className="space-y-6">
-              {/* Video Player */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="aspect-video bg-gray-900 relative">
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -269,7 +412,6 @@ const Learn: React.FC = () => {
                     </button>
                   </div>
                   
-                  {/* Video Progress */}
                   <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-4">
                     <div className="flex items-center space-x-3">
                       <span className="text-white text-sm">{Math.round(videoProgress)}%</span>
@@ -288,7 +430,6 @@ const Learn: React.FC = () => {
                 </div>
               </div>
 
-              {/* Interactive Quiz */}
               {activeModuleData.hasQuiz && videoProgress > 50 && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Check</h3>
@@ -323,7 +464,6 @@ const Learn: React.FC = () => {
                 </div>
               )}
 
-              {/* Personalized Video Recommendations */}
               {showPersonalizedVideos && (
                 <div className="bg-gradient-to-r from-purple-500 to-blue-600 rounded-xl p-6 text-white">
                   <h3 className="text-lg font-semibold mb-2">Personalized for You</h3>
@@ -345,11 +485,10 @@ const Learn: React.FC = () => {
               )}
             </div>
 
-            {/* Work Area */}
             {activeModuleData.hasCanvas && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Practice Area</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Interactive Practice Area</h3>
                   <div className="flex items-center space-x-2">
                     <div className="flex bg-gray-100 rounded-lg p-1">
                       <button
@@ -364,20 +503,40 @@ const Learn: React.FC = () => {
                         <span>Draw</span>
                       </button>
                       <button
-                        onClick={() => setWorkAreaMode('type')}
+                        onClick={() => setWorkAreaMode('text')}
                         className={`flex items-center space-x-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                          workAreaMode === 'type'
+                          workAreaMode === 'text'
                             ? 'bg-white text-gray-900 shadow-sm'
                             : 'text-gray-600 hover:text-gray-800'
                         }`}
                       >
                         <Type size={14} />
-                        <span>Type</span>
+                        <span>Text</span>
+                      </button>
+                      <button
+                        onClick={() => setWorkAreaMode('select')}
+                        className={`flex items-center space-x-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                          workAreaMode === 'select'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                      >
+                        <MousePointer size={14} />
+                        <span>Select</span>
                       </button>
                     </div>
                     
+                    {selectedTextId && (
+                      <button
+                        onClick={deleteSelected}
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <X size={18} />
+                      </button>
+                    )}
+                    
                     <button
-                      onClick={() => workAreaMode === 'draw' ? clearCanvas() : setWorkAreaText('')}
+                      onClick={clearWorkArea}
                       className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                       <Eraser size={18} />
@@ -385,35 +544,57 @@ const Learn: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  {workAreaMode === 'draw' ? (
-                    <>
-                      <canvas
-                        ref={canvasRef}
-                        width={400}
-                        height={300}
-                        className="w-full h-64 border border-gray-200 rounded-lg cursor-crosshair bg-white"
-                        onMouseDown={startDrawing}
-                        onMouseMove={draw}
-                        onMouseUp={stopDrawing}
-                        onMouseLeave={stopDrawing}
-                      />
-                      <p className="text-sm text-gray-500 mt-2 text-center">
-                        Draw your solutions and working steps here
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <textarea
-                        value={workAreaText}
-                        onChange={(e) => setWorkAreaText(e.target.value)}
-                        placeholder="Type your working steps here..."
-                        className="w-full h-64 p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
-                      />
-                      <p className="text-sm text-gray-500 mt-2 text-center">
-                        Type your working steps and calculations
-                      </p>
-                    </>
+                <div className="relative border-2 border-dashed border-gray-300 rounded-lg">
+                  <canvas
+                    ref={canvasRef}
+                    width={400}
+                    height={300}
+                    className={`w-full h-64 border border-gray-200 rounded-lg bg-white ${getCursorStyle()}`}
+                    onClick={handleCanvasClick}
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                  />
+                  
+                  {isAddingText && (
+                    <input
+                      ref={textInputRef}
+                      type="text"
+                      value={currentTextInput}
+                      onChange={(e) => setCurrentTextInput(e.target.value)}
+                      onKeyDown={handleTextInputKeyDown}
+                      onBlur={handleTextInputSubmit}
+                      className="absolute bg-transparent border-none outline-none text-gray-700 font-sans"
+                      style={{
+                        left: `${(textInputPosition.x / 400) * 100}%`,
+                        top: `${((textInputPosition.y - 16) / 300) * 100}%`,
+                        fontSize: '16px',
+                        minWidth: '100px'
+                      }}
+                      placeholder="Type here..."
+                    />
+                  )}
+                </div>
+
+                <div className="mt-4 text-sm text-gray-500">
+                  {workAreaMode === 'draw' && (
+                    <p className="flex items-center">
+                      <Pen size={14} className="mr-2" />
+                      Draw mode: Click and drag to draw
+                    </p>
+                  )}
+                  {workAreaMode === 'text' && (
+                    <p className="flex items-center">
+                      <Type size={14} className="mr-2" />
+                      Text mode: Click anywhere to add text
+                    </p>
+                  )}
+                  {workAreaMode === 'select' && (
+                    <p className="flex items-center">
+                      <MousePointer size={14} className="mr-2" />
+                      Select mode: Click on text to select
+                    </p>
                   )}
                 </div>
 
@@ -434,7 +615,6 @@ const Learn: React.FC = () => {
       <Navigation />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Interactive Learning</h1>
           <p className="text-gray-600">
@@ -442,7 +622,6 @@ const Learn: React.FC = () => {
           </p>
         </div>
 
-        {/* Filters */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -475,14 +654,12 @@ const Learn: React.FC = () => {
           </div>
         </div>
 
-        {/* Learning Modules Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredModules.map((module) => (
             <div
               key={module.id}
               className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer"
             >
-              {/* Module Header */}
               <div className="p-6 pb-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-2">
@@ -506,7 +683,6 @@ const Learn: React.FC = () => {
                   {module.description}
                 </p>
 
-                {/* Module Meta */}
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-1">
@@ -520,7 +696,6 @@ const Learn: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Progress Bar */}
                 {module.progress > 0 && (
                   <div className="mb-4">
                     <div className="flex justify-between text-xs text-gray-600 mb-1">
@@ -536,7 +711,6 @@ const Learn: React.FC = () => {
                   </div>
                 )}
 
-                {/* Interactive Features Badge */}
                 {module.type === 'interactive' && (
                   <div className="flex items-center space-x-2 mb-4">
                     {module.hasQuiz && (
@@ -553,7 +727,6 @@ const Learn: React.FC = () => {
                 )}
               </div>
 
-              {/* Module Footer */}
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                 <button 
                   onClick={() => startModule(module.id)}
@@ -567,7 +740,6 @@ const Learn: React.FC = () => {
           ))}
         </div>
 
-        {/* Personalized Recommendations */}
         <div className="mt-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-8 text-white">
           <h2 className="text-2xl font-bold mb-2">Personalized for You</h2>
           <p className="text-blue-100 mb-6">
