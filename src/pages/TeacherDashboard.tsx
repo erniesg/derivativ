@@ -61,14 +61,68 @@ const TeacherDashboard: React.FC = () => {
     );
   };
 
-  const generateMaterial = () => {
-    // This would typically make an API call to generate the material
+  const generateMaterial = async () => {
+    if (selectedTopics.length === 0) {
+      alert('Please select at least one topic');
+      return;
+    }
+
     console.log('Generating material with:', {
       topics: selectedTopics,
       detailLevel,
       targetLevel,
       materialType
     });
+
+    try {
+      // Map frontend values to backend API format
+      const requestData = {
+        document_type: materialType === 'assessment' ? 'worksheet' : materialType as 'worksheet' | 'notes',
+        detail_level: detailLevel <= 3 ? 'minimal' : detailLevel <= 7 ? 'medium' : 'comprehensive' as 'minimal' | 'medium' | 'comprehensive',
+        title: `${selectedTopics.join(' & ')} ${materialType.charAt(0).toUpperCase() + materialType.slice(1)}`,
+        topic: selectedTopics.join(', ').toLowerCase().replace(/\s+/g, '_'),
+        tier: 'core' as const,
+        grade_level: targetLevel === 'IGCSE' ? 7 : targetLevel === 'A-Level' ? 12 : 10,
+        auto_include_questions: true,
+        max_questions: materialType === 'notes' ? 3 : 5,
+        custom_instructions: `Generate content suitable for ${targetLevel} level students with detail level ${detailLevel}/10`,
+        include_answers: true,
+        include_working: detailLevel > 5
+      };
+
+      console.log('Sending request to API:', requestData);
+
+      // Call the document generation API
+      const API_BASE_URL = 'http://localhost:8000';
+      const response = await fetch(`${API_BASE_URL}/api/documents/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`API Error: ${response.status} - ${errorData}`);
+      }
+
+      const result = await response.json();
+      console.log('Document generated successfully:', result);
+
+      if (result.success) {
+        alert(`✅ ${result.document.title} generated successfully!\n` +
+              `Processing time: ${result.processing_time.toFixed(2)}s\n` +
+              `Sections: ${result.sections_generated}\n` +
+              `Estimated duration: ${result.document.estimated_duration} minutes`);
+      } else {
+        throw new Error(result.error_message || 'Document generation failed');
+      }
+
+    } catch (error) {
+      console.error('Error generating material:', error);
+      alert(`❌ Failed to generate material: ${error instanceof Error ? error.message : 'Unknown error'}\n\nMake sure the API server is running at http://localhost:8000`);
+    }
   };
 
   const getMaterialIcon = (type: string) => {
