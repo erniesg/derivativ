@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Navigation from '../components/Navigation';
 import { Play, BookOpen, FileText, Video, ChevronRight, Clock, Star, Pen, Type, Eraser, Send, Volume2, Pause, SkipForward, MousePointer, X, Edit3 } from 'lucide-react';
 
 interface LearningModule {
@@ -460,8 +459,7 @@ const Learn: React.FC = () => {
   if (activeModule && activeModuleData) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        
+          
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -707,7 +705,6 @@ const Learn: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">

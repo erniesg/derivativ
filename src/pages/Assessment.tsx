@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Navigation from '../components/Navigation';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { Clock, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 
@@ -132,7 +131,6 @@ const Assessment: React.FC = () => {
 
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navigation />
         
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">

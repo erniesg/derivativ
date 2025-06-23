@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider } from './contexts/UserContext';
 import { AssessmentProvider } from './contexts/AssessmentContext';
+import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import Practice from './pages/Practice';
@@ -15,7 +16,7 @@ function App() {
     <UserProvider>
       <AssessmentProvider>
         <Router>
-          <div className="min-h-screen bg-gray-50">
+          <Layout>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -25,7 +26,7 @@ function App() {
               <Route path="/teacher" element={<TeacherDashboard />} />
               <Route path="/about" element={<About />} />
             </Routes>
-          </div>
+          </Layout>
         </Router>
       </AssessmentProvider>
     </UserProvider>
