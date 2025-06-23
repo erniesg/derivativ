@@ -130,6 +130,17 @@ const About: React.FC = () => {
           </p>
         </div>
 
+        {/* Mission Statement */}
+        <section className="mb-20">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
+            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              To democratize quality math education by providing AI-powered, personalized learning experiences 
+              that help every student reach their full potential, regardless of their starting point or learning style.
+            </p>
+          </div>
+        </section>
+
         {/* Team Section */}
         <section className="mb-20">
           <div className="text-center mb-12">
@@ -274,16 +285,6 @@ const About: React.FC = () => {
           </div>
         </section>
 
-        {/* Mission Statement */}
-        <section className="text-center">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              To democratize quality math education by providing AI-powered, personalized learning experiences 
-              that help every student reach their full potential, regardless of their starting point or learning style.
-            </p>
-          </div>
-        </section>
       </main>
     </div>
   );
