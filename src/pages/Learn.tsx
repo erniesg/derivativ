@@ -145,7 +145,7 @@ const Learn: React.FC = () => {
 
   useEffect(() => {
     redrawCanvas();
-  }, [textElements, drawingPaths, selectedElementId, selectedElementType]);
+  }, [textElements, drawingPaths, selectedElementId, selectedElementType, redrawCanvas]);
 
   const redrawCanvas = () => {
     const canvas = canvasRef.current;

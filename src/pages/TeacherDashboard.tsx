@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Download, Settings, Users, BarChart3, Plus, Filter } from 'lucide-react';
+import { FileText, Download, Users, BarChart3, Plus, Filter } from 'lucide-react';
 
 interface GeneratedMaterial {
   id: string;
@@ -92,7 +92,7 @@ const TeacherDashboard: React.FC = () => {
       console.log('Sending request to API:', requestData);
 
       // Call the document generation API
-      const API_BASE_URL = 'http://localhost:8000';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
       const response = await fetch(`${API_BASE_URL}/api/documents/generate`, {
         method: 'POST',
         headers: {

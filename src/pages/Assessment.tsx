@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { Clock, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 
@@ -13,13 +13,12 @@ interface Question {
 }
 
 const Assessment: React.FC = () => {
-  const { assessmentData, updateTopicScore, getAdaptiveQuestions } = useAssessment();
+  const { assessmentData, updateTopicScore } = useAssessment();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes
-  const [isCompleted, setIsCompleted] = useState(false);
 
   // Mock questions - in real app, these would come from API
   const questions: Question[] = [
@@ -70,6 +69,19 @@ const Assessment: React.FC = () => {
     }
   ];
 
+  const handleComplete = useCallback(() => {
+    setShowResults(true);
+
+    // Calculate scores and update assessment data
+    questions.forEach((question, index) => {
+      const userAnswer = answers[index];
+      const isCorrect = userAnswer === question.correctAnswer;
+      const score = isCorrect ? 10 : 0;
+      
+      updateTopicScore(question.topic, score, question.difficulty);
+    });
+  }, [questions, answers, updateTopicScore]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -82,7 +94,7 @@ const Assessment: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [handleComplete]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -105,20 +117,6 @@ const Assessment: React.FC = () => {
     } else {
       handleComplete();
     }
-  };
-
-  const handleComplete = () => {
-    setIsCompleted(true);
-    setShowResults(true);
-
-    // Calculate scores and update assessment data
-    questions.forEach((question, index) => {
-      const userAnswer = answers[index];
-      const isCorrect = userAnswer === question.correctAnswer;
-      const score = isCorrect ? 10 : 0;
-      
-      updateTopicScore(question.topic, score, question.difficulty);
-    });
   };
 
   const currentQ = questions[currentQuestion];

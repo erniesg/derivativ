@@ -2,7 +2,7 @@ import React from 'react';
 import { useUser } from '../contexts/UserContext';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { Link } from 'react-router-dom';
-import { Target, BookOpen, TrendingUp, Clock, Award, ChevronRight } from 'lucide-react';
+import { Target, TrendingUp, Clock, Award, ChevronRight } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user } = useUser();

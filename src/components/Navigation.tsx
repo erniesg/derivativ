@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
-import { BookOpen, Users, GraduationCap, Target } from 'lucide-react';
+import { Users, GraduationCap, Target } from 'lucide-react';
 
 const Navigation: React.FC = () => {
-  const { userRole, setUserRole, user } = useUser();
+  const { userRole, setUserRole } = useUser();
   const navigate = useNavigate();
 
   const handleRoleSwitch = () => {
@@ -12,8 +12,6 @@ const Navigation: React.FC = () => {
     setUserRole(newRole);
     navigate('/');
   };
-
-  const logoColor = userRole === 'student' ? 'text-blue-600' : 'text-green-600';
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100">

@@ -20,7 +20,7 @@ interface AssessmentContextType {
   assessmentData: AssessmentData | null;
   setAssessmentData: (data: AssessmentData) => void;
   updateTopicScore: (topic: string, score: number, difficulty: 'easy' | 'medium' | 'hard') => void;
-  getAdaptiveQuestions: (topic?: string) => any[];
+  getAdaptiveQuestions: (topic?: string) => { easyRatio: number; mediumRatio: number; hardRatio: number; adaptedFor: string };
 }
 
 const AssessmentContext = createContext<AssessmentContextType | undefined>(undefined);
@@ -65,13 +65,13 @@ export const AssessmentProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   const getAdaptiveQuestions = (topic?: string) => {
-    if (!assessmentData) return [];
+    if (!assessmentData) return { easyRatio: 0.5, mediumRatio: 0.3, hardRatio: 0.2, adaptedFor: 'unknown' };
     
     const topicData = topic ? 
       assessmentData.topicScores.find(t => t.topic === topic) : 
       assessmentData.topicScores[0];
     
-    if (!topicData) return [];
+    if (!topicData) return { easyRatio: 0.5, mediumRatio: 0.3, hardRatio: 0.2, adaptedFor: 'unknown' };
 
     const score = topicData.score;
     let easyRatio = 0.5, mediumRatio = 0.3, hardRatio = 0.2;

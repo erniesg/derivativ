@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Target, BookOpen, Globe, TrendingUp, CheckCircle, Clock, Star, Award, BarChart } from 'lucide-react';
+import { Target, BookOpen, Globe, TrendingUp, CheckCircle, Clock, Star } from 'lucide-react';
 
 const About: React.FC = () => {
   const teamMembers = [
