@@ -341,10 +341,17 @@ export enum Tier {
   EXTENDED = 'Extended',
 }
 
+export interface ValidationError {
+  loc: any[];
+  msg: string;
+  type: string;
+}
+
+
 export enum TopicName {
   NUMBER = 'Number',
   ALGEBRA_AND_GRAPHS = 'Algebra and graphs',
-  COORDINATE_GEOMETRY = 'Coordinate geometry', 
+  COORDINATE_GEOMETRY = 'Coordinate geometry',
   GEOMETRY = 'Geometry',
   MENSURATION = 'Mensuration',
   TRIGONOMETRY = 'Trigonometry',
@@ -352,13 +359,6 @@ export enum TopicName {
   PROBABILITY = 'Probability',
   STATISTICS = 'Statistics',
 }
-
-export interface ValidationError {
-  loc: any[];
-  msg: string;
-  type: string;
-}
-
 
 // Utility types for API integration
 export type ApiResponse<T> = {
