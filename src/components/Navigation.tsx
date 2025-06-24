@@ -30,8 +30,8 @@ const Navigation: React.FC = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex space-x-8">
-            {isTeacherPage ? (
-              // Teacher Navigation - Replace Practice/Learn with teacher-specific options
+            {userRole === 'teacher' && isTeacherPage ? (
+              // Teacher Navigation - Only show when user is teacher AND on teacher pages
               <>
                 <Link 
                   to="/teacher/generate" 
@@ -67,7 +67,7 @@ const Navigation: React.FC = () => {
                 </Link>
               </>
             ) : (
-              // Student/General Navigation
+              // Student/General Navigation - Show when NOT (teacher role + teacher page)
               <>
                 <Link 
                   to="/practice" 
@@ -102,7 +102,7 @@ const Navigation: React.FC = () => {
 
           {/* Role Toggle */}
           <div className="flex items-center space-x-3">
-            {isTeacherPage && (
+            {userRole === 'teacher' && isTeacherPage && (
               <div className="text-sm text-gray-500 bg-green-50 px-3 py-1 rounded-full">
                 Teacher Dashboard
               </div>
