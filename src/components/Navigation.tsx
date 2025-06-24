@@ -1,17 +1,20 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
-import { Users, GraduationCap, Target } from 'lucide-react';
+import { Users, GraduationCap, Target, FileText, BarChart3, FolderOpen } from 'lucide-react';
 
 const Navigation: React.FC = () => {
   const { userRole, setUserRole } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleRoleSwitch = () => {
     const newRole = userRole === 'student' ? 'teacher' : 'student';
     setUserRole(newRole);
     navigate('/');
   };
+
+  const isTeacherPage = location.pathname.startsWith('/teacher');
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100">
@@ -27,37 +30,77 @@ const Navigation: React.FC = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex space-x-8">
-            <Link 
-              to="/practice" 
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Practice
-            </Link>
-            <Link 
-              to="/learn" 
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Learn
-            </Link>
-            {userRole === 'student' && (
-              <Link 
-                to="/assessment" 
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1"
-              >
-                <Target size={16} />
-                <span>Auto-Assessment</span>
-              </Link>
+            {isTeacherPage ? (
+              // Teacher Navigation
+              <>
+                <Link 
+                  to="/teacher/generate" 
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
+                    location.pathname === '/teacher/generate' 
+                      ? 'text-green-600 font-semibold' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <FileText size={16} />
+                  <span>Generate Materials</span>
+                </Link>
+                <Link 
+                  to="/teacher" 
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
+                    location.pathname === '/teacher' 
+                      ? 'text-green-600 font-semibold' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <FolderOpen size={16} />
+                  <span>Library</span>
+                </Link>
+                <span className="text-gray-400 hover:text-gray-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 cursor-not-allowed">
+                  <BarChart3 size={16} />
+                  <span>Analytics</span>
+                </span>
+              </>
+            ) : (
+              // Student/General Navigation
+              <>
+                <Link 
+                  to="/practice" 
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Practice
+                </Link>
+                <Link 
+                  to="/learn" 
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Learn
+                </Link>
+                {userRole === 'student' && (
+                  <Link 
+                    to="/assessment" 
+                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1"
+                  >
+                    <Target size={16} />
+                    <span>Auto-Assessment</span>
+                  </Link>
+                )}
+                <Link 
+                  to="/about" 
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  About
+                </Link>
+              </>
             )}
-            <Link 
-              to="/about" 
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              About
-            </Link>
           </div>
 
           {/* Role Toggle */}
           <div className="flex items-center space-x-3">
+            {isTeacherPage && (
+              <div className="text-sm text-gray-500 bg-green-50 px-3 py-1 rounded-full">
+                Teacher Dashboard
+              </div>
+            )}
             <div className="flex bg-gray-100 rounded-full p-1">
               <button
                 onClick={handleRoleSwitch}

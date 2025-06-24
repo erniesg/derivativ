@@ -56,33 +56,6 @@ const TeacherGenerationPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl font-bold text-green-600">∂</span>
-                <span className="text-xl font-semibold text-gray-900">Derivativ</span>
-              </div>
-              <div className="hidden md:block">
-                <nav className="flex space-x-8">
-                  <span className="text-green-600 font-medium">Generate Materials</span>
-                  <span className="text-gray-500 hover:text-gray-700 cursor-pointer">Library</span>
-                  <span className="text-gray-500 hover:text-gray-700 cursor-pointer">Analytics</span>
-                </nav>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-500">Teacher Dashboard</div>
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-green-600">T</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
