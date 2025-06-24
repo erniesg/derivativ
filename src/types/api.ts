@@ -341,6 +341,18 @@ export enum Tier {
   EXTENDED = 'Extended',
 }
 
+export enum TopicName {
+  NUMBER = 'Number',
+  ALGEBRA_AND_GRAPHS = 'Algebra and graphs',
+  COORDINATE_GEOMETRY = 'Coordinate geometry', 
+  GEOMETRY = 'Geometry',
+  MENSURATION = 'Mensuration',
+  TRIGONOMETRY = 'Trigonometry',
+  TRANSFORMATIONS_AND_VECTORS = 'Transformations and vectors',
+  PROBABILITY = 'Probability',
+  STATISTICS = 'Statistics',
+}
+
 export interface ValidationError {
   loc: any[];
   msg: string;

@@ -9,6 +9,7 @@ import Practice from './pages/Practice';
 import Learn from './pages/Learn';
 import Assessment from './pages/Assessment';
 import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherGenerationPage from './pages/TeacherGenerationPage';
 import About from './pages/About';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
               <Route path="/learn" element={<Learn />} />
               <Route path="/assessment" element={<Assessment />} />
               <Route path="/teacher" element={<TeacherDashboard />} />
+              <Route path="/teacher/generate" element={<TeacherGenerationPage />} />
               <Route path="/about" element={<About />} />
             </Routes>
           </Layout>
