@@ -4,9 +4,13 @@ import { useUser } from '../contexts/UserContext';
 import { Users, GraduationCap, Target, FileText, BarChart3, FolderOpen } from 'lucide-react';
 
 const Navigation: React.FC = () => {
-  const { userRole, setUserRole } = useUser();
+  const userContext = useUser();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Defensive destructuring to avoid initialization errors
+  const userRole = userContext?.userRole || 'student';
+  const setUserRole = userContext?.setUserRole || (() => {});
 
   const handleRoleSwitch = () => {
     const newRole = userRole === 'student' ? 'teacher' : 'student';
@@ -14,7 +18,7 @@ const Navigation: React.FC = () => {
     navigate('/');
   };
 
-  const isTeacherPage = location.pathname.startsWith('/teacher');
+  const isTeacherPage = location?.pathname?.startsWith('/teacher') || false;
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-100">
