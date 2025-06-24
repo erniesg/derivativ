@@ -31,7 +31,7 @@ const Navigation: React.FC = () => {
           {/* Navigation Links */}
           <div className="hidden md:flex space-x-8">
             {isTeacherPage ? (
-              // Teacher Navigation
+              // Teacher Navigation - Replace Practice/Learn with teacher-specific options
               <>
                 <Link 
                   to="/teacher/generate" 
@@ -59,6 +59,12 @@ const Navigation: React.FC = () => {
                   <BarChart3 size={16} />
                   <span>Analytics</span>
                 </span>
+                <Link 
+                  to="/about" 
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  About
+                </Link>
               </>
             ) : (
               // Student/General Navigation
