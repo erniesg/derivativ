@@ -47,7 +47,7 @@ const LandingPage: React.FC = () => {
       setAssessmentData(initialAssessment);
       navigate('/dashboard');
     } else {
-      navigate('/teacher');
+      navigate('/teacher/generate');
     }
   };
 
