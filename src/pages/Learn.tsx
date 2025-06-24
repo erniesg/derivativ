@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, BookOpen, FileText, Video, ChevronRight, Clock, Star, Pen, Type, Eraser, Send, Volume2, Pause, SkipForward, MousePointer, X, Edit3 } from 'lucide-react';
 
 interface LearningModule {
@@ -143,11 +143,7 @@ const Learn: React.FC = () => {
     }
   ];
 
-  useEffect(() => {
-    redrawCanvas();
-  }, [textElements, drawingPaths, selectedElementId, selectedElementType, redrawCanvas]);
-
-  const redrawCanvas = () => {
+  const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -194,7 +190,11 @@ const Learn: React.FC = () => {
         }
       }
     });
-  };
+  }, [textElements, drawingPaths, selectedElementId, selectedElementType, editingTextId]);
+
+  useEffect(() => {
+    redrawCanvas();
+  }, [redrawCanvas]);
 
   const getCanvasCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
