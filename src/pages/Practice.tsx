@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Eraser, Type, Pen, Check, X, MousePointer, Edit3 } from 'lucide-react';
 
 interface Question {
@@ -78,11 +78,7 @@ const Practice: React.FC = () => {
 
   const currentQ = questions[currentQuestion];
 
-  useEffect(() => {
-    redrawCanvas();
-  }, [textElements, drawingPaths, selectedElementId, selectedElementType, redrawCanvas]);
-
-  const redrawCanvas = () => {
+  const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -129,7 +125,11 @@ const Practice: React.FC = () => {
         }
       }
     });
-  };
+  }, [textElements, drawingPaths, selectedElementId, selectedElementType, editingTextId]);
+
+  useEffect(() => {
+    redrawCanvas();
+  }, [redrawCanvas]);
 
   const getCanvasCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
