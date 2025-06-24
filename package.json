@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-types": "node scripts/generate-types.js",
+    "predev": "npm run generate-types"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
