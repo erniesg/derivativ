@@ -4,6 +4,7 @@ import { useUser } from '../contexts/UserContext';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SocialLoginButtons } from '../components/auth/LoginButton';
+import BoltBadge from '../components/BoltBadge';
 import { Sparkles, FileText, Calculator, Target, Triangle, Square, Palette, Brain } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
@@ -111,6 +112,8 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      {/* Bolt.new Badge */}
+      <BoltBadge variant="black" position="bottom-right" />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
