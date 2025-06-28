@@ -51,6 +51,37 @@ class ApiService {
     }
   }
 
+   // Add authentication headers for authenticated requests
+  private async authenticatedRequest<T>(
+    endpoint: string,
+    authToken: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+  }
+
+  // User Profile API
+  async getUserProfile(authToken: string): Promise<ApiResponse<any>> {
+    return this.authenticatedRequest<any>('/api/users/profile', authToken);
+  }
+
+  async updateUserProfile(authToken: string, profileData: any): Promise<ApiResponse<any>> {
+    return this.authenticatedRequest<any>('/api/users/profile', authToken, {
+      method: 'PUT',
+      body: JSON.stringify(profileData)
+    });
+  }
+
+  async getUserAssessmentData(authToken: string): Promise<ApiResponse<any>> {
+    return this.authenticatedRequest<any>('/api/users/assessment-data', authToken);
+  }
+
   async generateDocument(request: DocumentGenerationRequest): Promise<ApiResponse<DocumentGenerationResult>> {
     return this.request<DocumentGenerationResult>('/api/documents/generate', {
       method: 'POST',

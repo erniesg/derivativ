@@ -2,8 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom animations for 404 page */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes float-delayed {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 3s ease-in-out infinite 1.5s;
+}
+
 .anta-regular {
   font-family: "Anta", sans-serif;
   font-weight: 400;
   font-style: normal;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+
+  /* Prevent horizontal scroll on mobile */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Ensure mobile inputs are properly sized */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+  }
+
+  /* Better touch targets */
+  button,
+  .touch-target {
+    min-height: 44px;
+  }
+
+  /* Improve modal positioning on mobile */
+  .modal-content {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
 }

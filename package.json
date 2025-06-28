@@ -12,10 +12,12 @@
     "predev": "npm run generate-types"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.2",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.20.1"
+    "react-router-dom": "^6.20.1",
+    "tldraw": "^3.13.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

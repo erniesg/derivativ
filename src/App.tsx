@@ -1,7 +1,9 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthContextProvider } from './contexts/AuthContext';
 import { UserProvider } from './contexts/UserContext';
 import { AssessmentProvider } from './contexts/AssessmentContext';
+import { AuthCallback } from './components/auth/AuthCallback';
+import { getFeatureFlag } from './config/featureFlags';
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
@@ -11,27 +13,35 @@ import Assessment from './pages/Assessment';
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherGenerationPage from './pages/TeacherGenerationPage';
 import About from './pages/About';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
-    <UserProvider>
-      <AssessmentProvider>
-        <Router>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/practice" element={<Practice />} />
-              <Route path="/learn" element={<Learn />} />
-              <Route path="/assessment" element={<Assessment />} />
-              <Route path="/teacher" element={<TeacherDashboard />} />
-              <Route path="/teacher/generate" element={<TeacherGenerationPage />} />
-              <Route path="/about" element={<About />} />
-            </Routes>
-          </Layout>
-        </Router>
-      </AssessmentProvider>
-    </UserProvider>
+    <AuthContextProvider>
+      <UserProvider>
+        <AssessmentProvider>
+          <Router>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/practice" element={<Practice />} />
+                {getFeatureFlag('LEARN_PAGE') && (
+                  <Route path="/learn" element={<Learn />} />
+                )}
+                <Route path="/assessment" element={<Assessment />} />
+                <Route path="/teacher" element={<TeacherDashboard />} />
+                <Route path="/teacher/generate" element={<TeacherGenerationPage />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
+                {/* Catch-all route for 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </Router>
+        </AssessmentProvider>
+      </UserProvider>
+    </AuthContextProvider>
   );
 }
 

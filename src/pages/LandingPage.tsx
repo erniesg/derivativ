@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { useAssessment } from '../contexts/AssessmentContext';
+import { useAuth } from '../contexts/AuthContext';
+import { SocialLoginButtons } from '../components/auth/LoginButton';
 import { Sparkles, FileText, Calculator, Target, Triangle, Square, Palette, Brain } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
   const { userRole, setUser } = useUser();
   const { setAssessmentData } = useAssessment();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     examSession: '',
     school: '',
@@ -17,16 +20,35 @@ const LandingPage: React.FC = () => {
     schoolType: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'assessment' | 'dashboard'>('dashboard');
+
+  const handleAuthRequired = (mode: 'assessment' | 'dashboard') => {
+    if (user) {
+      // User is already authenticated, proceed directly
+      if (mode === 'assessment') {
+        handleTakeAssessment();
+      } else {
+        handleSubmit();
+      }
+    } else {
+      // Store form data and show auth modal
+      sessionStorage.setItem('pendingFormData', JSON.stringify(formData));
+      sessionStorage.setItem('authRedirectTo', mode === 'assessment' ? '/assessment' : '/dashboard');
+      setAuthMode(mode);
+      setShowAuthModal(true);
+    }
+  };
+
+  const handleSubmit = () => {
     const userData = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: 'User',
+      id: user?.id || Math.random().toString(36).substr(2, 9),
+      name: user?.name || 'User',
+      email: user?.email || '',
       role: userRole,
       ...formData
     };
-    
+
     setUser(userData);
 
     if (userRole === 'student') {
@@ -53,12 +75,13 @@ const LandingPage: React.FC = () => {
 
   const handleTakeAssessment = () => {
     const userData = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: 'User',
+      id: user?.id || Math.random().toString(36).substr(2, 9),
+      name: user?.name || 'User',
+      email: user?.email || '',
       role: userRole,
       ...formData
     };
-    
+
     setUser(userData);
 
     // Initialize assessment data for students
@@ -82,19 +105,19 @@ const LandingPage: React.FC = () => {
   const gradeLevels = ['Year 9', 'Year 10', 'Year 11', 'Year 12', 'Year 13', 'Mixed'];
 
   const isStudent = userRole === 'student';
-  const themeColors = isStudent 
+  const themeColors = isStudent
     ? { primary: 'blue', secondary: 'purple', gradient: 'from-blue-600 to-purple-600' }
     : { primary: 'green', secondary: 'emerald', gradient: 'from-green-600 to-emerald-600' };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Column - Content */}
-          <div className="space-y-8">
-            <div className="space-y-6">
-              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+          <div className="space-y-6 lg:space-y-8 text-center lg:text-left">
+            <div className="space-y-4 lg:space-y-6">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
                 <span className={`text-transparent bg-clip-text bg-gradient-to-r ${themeColors.gradient}`}>
                   AI that {isStudent ? 'helps you ace' : 'creates perfect lesson materials'}
                 </span>
@@ -103,56 +126,56 @@ const LandingPage: React.FC = () => {
                   {isStudent ? 'your IGCSE math exam' : 'instantly for your classroom'}
                 </span>
               </h1>
-              
-              <p className="text-xl text-gray-600 max-w-lg">
-                {isStudent 
-                  ? 'Learn the way you want to' 
+
+              <p className="text-lg sm:text-xl text-gray-600 max-w-lg mx-auto lg:mx-0">
+                {isStudent
+                  ? 'Learn the way you want to'
                   : 'Generate comprehensive teaching materials with AI precision'}
               </p>
             </div>
 
             {/* Features */}
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
               {isStudent ? (
                 <>
-                  <div className="text-center space-y-3">
-                    <div className={`mx-auto w-12 h-12 bg-${themeColors.primary}-100 rounded-xl flex items-center justify-center`}>
-                      <FileText className={`w-6 h-6 text-${themeColors.primary}-600`} />
+                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
+                    <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.primary}-100 rounded-xl flex items-center justify-center`}>
+                      <FileText className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.primary}-600`} />
                     </div>
-                    <p className="font-medium text-gray-900">Smart Materials</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Smart Materials</p>
                   </div>
-                  <div className="text-center space-y-3">
-                    <div className={`mx-auto w-12 h-12 bg-${themeColors.secondary}-100 rounded-xl flex items-center justify-center`}>
-                      <Target className={`w-6 h-6 text-${themeColors.secondary}-600`} />
+                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
+                    <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.secondary}-100 rounded-xl flex items-center justify-center`}>
+                      <Target className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.secondary}-600`} />
                     </div>
-                    <p className="font-medium text-gray-900">Targeted Practice</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Targeted Practice</p>
                   </div>
-                  <div className="text-center space-y-3">
-                    <div className="mx-auto w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                      <Calculator className="w-6 h-6 text-orange-600" />
+                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
+                    <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                      <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                     </div>
-                    <p className="font-medium text-gray-900">Any Format</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Any Format</p>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="text-center space-y-3">
-                    <div className={`mx-auto w-12 h-12 bg-${themeColors.primary}-100 rounded-xl flex items-center justify-center`}>
-                      <Triangle className={`w-6 h-6 text-${themeColors.primary}-600`} />
+                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
+                    <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.primary}-100 rounded-xl flex items-center justify-center`}>
+                      <Triangle className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.primary}-600`} />
                     </div>
-                    <p className="font-medium text-gray-900">Accurate Diagrams</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Accurate Diagrams</p>
                   </div>
-                  <div className="text-center space-y-3">
-                    <div className={`mx-auto w-12 h-12 bg-${themeColors.secondary}-100 rounded-xl flex items-center justify-center`}>
-                      <Square className={`w-6 h-6 text-${themeColors.secondary}-600`} />
+                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
+                    <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.secondary}-100 rounded-xl flex items-center justify-center`}>
+                      <Square className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.secondary}-600`} />
                     </div>
-                    <p className="font-medium text-gray-900">Complete Worksheets</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Complete Worksheets</p>
                   </div>
-                  <div className="text-center space-y-3">
-                    <div className="mx-auto w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                      <Palette className="w-6 h-6 text-orange-600" />
+                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
+                    <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                      <Palette className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                     </div>
-                    <p className="font-medium text-gray-900">Teaching Materials</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Teaching Materials</p>
                   </div>
                 </>
               )}
@@ -160,9 +183,9 @@ const LandingPage: React.FC = () => {
           </div>
 
           {/* Right Column - Form */}
-          <div className={`bg-white rounded-2xl shadow-xl border-2 border-${themeColors.primary}-100 p-8`}>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900">
+          <div className={`bg-white rounded-2xl shadow-xl border-2 border-${themeColors.primary}-100 p-6 lg:p-8 order-first lg:order-last`}>
+            <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 text-center lg:text-left">
                 {isStudent ? 'Tell us about yourself' : 'Tell us about your teaching needs'}
               </h2>
 
@@ -175,7 +198,7 @@ const LandingPage: React.FC = () => {
                     </label>
                     <select
                       value={formData.examSession}
-                      onChange={(e) => setFormData({...formData, examSession: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, examSession: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     >
@@ -202,7 +225,7 @@ const LandingPage: React.FC = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={handleTakeAssessment}
+                        onClick={() => handleAuthRequired('assessment')}
                         className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200"
                       >
                         <Target className="inline-block w-4 h-4 mr-2" />
@@ -220,7 +243,7 @@ const LandingPage: React.FC = () => {
                     </label>
                     <select
                       value={formData.subjects[0] || ''}
-                      onChange={(e) => setFormData({...formData, subjects: [e.target.value]})}
+                      onChange={(e) => setFormData({ ...formData, subjects: [e.target.value] })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       required
                     >
@@ -245,13 +268,12 @@ const LandingPage: React.FC = () => {
                             const newLevels = currentLevels.includes(level)
                               ? currentLevels.filter(l => l !== level)
                               : [...currentLevels, level];
-                            setFormData({...formData, gradeLevels: newLevels});
+                            setFormData({ ...formData, gradeLevels: newLevels });
                           }}
-                          className={`py-3 px-4 rounded-lg border-2 transition-all duration-200 ${
-                            formData.gradeLevels.includes(level)
-                              ? 'border-green-500 bg-green-50 text-green-700 font-semibold'
-                              : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                          }`}
+                          className={`py-3 px-4 rounded-lg border-2 transition-all duration-200 ${formData.gradeLevels.includes(level)
+                            ? 'border-green-500 bg-green-50 text-green-700 font-semibold'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                            }`}
                         >
                           {level}
                         </button>
@@ -265,7 +287,7 @@ const LandingPage: React.FC = () => {
                     </label>
                     <select
                       value={formData.schoolType}
-                      onChange={(e) => setFormData({...formData, schoolType: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, schoolType: e.target.value })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       required
                     >
@@ -286,7 +308,7 @@ const LandingPage: React.FC = () => {
                 <input
                   type="text"
                   value={formData.school}
-                  onChange={(e) => setFormData({...formData, school: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, school: e.target.value })}
                   placeholder={isStudent ? "e.g., Singapore International School" : "e.g., Cambridge International School"}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -294,7 +316,8 @@ const LandingPage: React.FC = () => {
 
               {isStudent && (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => handleAuthRequired('dashboard')}
                   className={`w-full bg-gradient-to-r ${themeColors.gradient} text-white py-4 px-6 rounded-lg font-semibold text-lg hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200`}
                 >
                   <Sparkles className="inline-block w-5 h-5 mr-2" />
@@ -313,7 +336,7 @@ const LandingPage: React.FC = () => {
               )}
 
               <p className="text-sm text-gray-500 text-center">
-                {isStudent 
+                {isStudent
                   ? 'Used to generate UI & personalize your learning experience'
                   : 'This will generate your teaching materials dashboard'
                 }
@@ -322,6 +345,37 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Target className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Sign in to {authMode === 'assessment' ? 'Start Your Assessment' : 'Ace Your Exam'}
+              </h2>
+              <p className="text-gray-600">
+                {authMode === 'assessment'
+                  ? 'Sign in to take your personalized assessment quiz and track your progress.'
+                  : 'Sign in to access your personalized dashboard and start your exam preparation journey.'
+                }
+              </p>
+            </div>
+
+            <SocialLoginButtons />
+
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="w-full mt-4 py-2 px-4 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
