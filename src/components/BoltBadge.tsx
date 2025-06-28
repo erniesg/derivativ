@@ -4,12 +4,14 @@ interface BoltBadgeProps {
   variant?: 'white' | 'black' | 'text';
   position?: 'top-right' | 'bottom-right' | 'bottom-left' | 'top-left';
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const BoltBadge: React.FC<BoltBadgeProps> = ({ 
   variant = 'black', 
   position = 'bottom-right',
-  className = '' 
+  className = '',
+  size = 'md'
 }) => {
   const positionClasses = {
     'top-right': 'fixed top-4 right-4 z-50',
@@ -18,33 +20,42 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({
     'top-left': 'fixed top-4 left-4 z-50'
   };
 
+  const sizeClasses = {
+    'sm': 'w-8 h-8',
+    'md': 'w-12 h-12',
+    'lg': 'w-16 h-16'
+  };
+
   const getBadgeContent = () => {
     switch (variant) {
       case 'white':
         return (
-          <div className="bg-white rounded-full p-2 shadow-lg hover:shadow-xl transition-shadow duration-200">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16 2L20.944 11.056L32 16L20.944 20.944L16 30L11.056 20.944L0 16L11.056 11.056L16 2Z" fill="#000000"/>
-            </svg>
+          <div className="hover:scale-105 transition-transform duration-200 drop-shadow-lg">
+            <img
+              src="/white_circle_360x360.png"
+              alt="Built with Bolt.new"
+              className={`${sizeClasses[size]} object-contain`}
+            />
           </div>
         );
       case 'black':
         return (
-          <div className="bg-black rounded-full p-2 shadow-lg hover:shadow-xl transition-shadow duration-200">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16 2L20.944 11.056L32 16L20.944 20.944L16 30L11.056 20.944L0 16L11.056 11.056L16 2Z" fill="#FFFFFF"/>
-            </svg>
+          <div className="hover:scale-105 transition-transform duration-200 drop-shadow-lg">
+            <img
+              src="/black_circle_360x360.png"
+              alt="Built with Bolt.new"
+              className={`${sizeClasses[size]} object-contain`}
+            />
           </div>
         );
       case 'text':
         return (
-          <div className="bg-black text-white px-3 py-2 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-200">
-            <div className="flex items-center space-x-2">
-              <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M16 2L20.944 11.056L32 16L20.944 20.944L16 30L11.056 20.944L0 16L11.056 11.056L16 2Z" fill="#FFFFFF"/>
-              </svg>
-              <span className="text-sm font-medium">Built with Bolt</span>
-            </div>
+          <div className="hover:scale-105 transition-transform duration-200 drop-shadow-lg">
+            <img
+              src="/logotext_poweredby_360w.png"
+              alt="Powered by Bolt.new"
+              className="h-8 w-auto object-contain"
+            />
           </div>
         );
       default:
@@ -57,7 +68,7 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({
       href="https://bolt.new/"
       target="_blank"
       rel="noopener noreferrer"
-      className={`${positionClasses[position]} hover:scale-105 transition-transform duration-200 ${className}`}
+      className={`${positionClasses[position]} ${className}`}
       aria-label="Built with Bolt.new"
     >
       {getBadgeContent()}
