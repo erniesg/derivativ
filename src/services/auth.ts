@@ -133,7 +133,7 @@ export class AuthService {
       id: user.id,
       email: user.email || '',
       name: (metadata.full_name as string) || (metadata.name as string) || (metadata.user_name as string) || user.email?.split('@')[0] || 'User',
-      role: (appMetadata.role as 'student' | 'teacher') || 'teacher',
+      role: (appMetadata.role as 'student' | 'teacher') || 'student',
       avatar_url: (metadata.avatar_url as string) || (metadata.picture as string),
       provider: appMetadata.provider as 'discord' | 'github' | 'twitter' | undefined,
       created_at: user.created_at || new Date().toISOString(),
