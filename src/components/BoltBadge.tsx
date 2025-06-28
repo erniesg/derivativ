@@ -42,7 +42,7 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({
         return (
           <div className="hover:scale-105 transition-transform duration-200 drop-shadow-lg">
             <img
-              src="https://raw.githubusercontent.com/erniesg/derivativ/refs/heads/main/public/black_circle_360x360.png"
+              src="https://raw.githubusercontent.com/erniesg/derivativ/refs/heads/main/public/black_circle_360x360.png?raw=true"
               alt="Built with Bolt.new"
               className={`${sizeClasses[size]} object-contain`}
             />
