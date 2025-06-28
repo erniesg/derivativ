@@ -32,7 +32,7 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({
         return (
           <div className="hover:scale-105 transition-transform duration-200 drop-shadow-lg">
             <img
-              src="/white_circle_360x360.png"
+              src="https://github.com/erniesg/derivativ/blob/main/public/white_circle_360x360.png?raw=true"
               alt="Built with Bolt.new"
               className={`${sizeClasses[size]} object-contain`}
             />
@@ -42,7 +42,7 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({
         return (
           <div className="hover:scale-105 transition-transform duration-200 drop-shadow-lg">
             <img
-              src="/black_circle_360x360.png"
+              src="https://raw.githubusercontent.com/erniesg/derivativ/refs/heads/main/public/black_circle_360x360.png"
               alt="Built with Bolt.new"
               className={`${sizeClasses[size]} object-contain`}
             />
@@ -52,7 +52,7 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({
         return (
           <div className="hover:scale-105 transition-transform duration-200 drop-shadow-lg">
             <img
-              src="/logotext_poweredby_360w.png"
+              src="https://github.com/erniesg/derivativ/blob/main/public/logotext_poweredby_360w.png?raw=true"
               alt="Powered by Bolt.new"
               className="h-8 w-auto object-contain"
             />
