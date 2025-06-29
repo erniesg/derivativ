@@ -35,7 +35,7 @@ export const AssessmentProvider: React.FC<{ children: ReactNode }> = ({ children
       if (topicScore.topic === topic) {
         const newRecentPerformance = [...topicScore.recentPerformance, score].slice(-5);
         const weightedScore = calculateSMAScore(newRecentPerformance, difficulty);
-        
+
         return {
           ...topicScore,
           score: weightedScore,
@@ -56,26 +56,26 @@ export const AssessmentProvider: React.FC<{ children: ReactNode }> = ({ children
   const calculateSMAScore = (performances: number[], difficulty: 'easy' | 'medium' | 'hard') => {
     const difficultyWeights = { easy: 1, medium: 1.5, hard: 2 };
     const timeWeights = performances.map((_, index) => Math.pow(1.2, index));
-    
-    const weightedSum = performances.reduce((sum, perf, index) => 
+
+    const weightedSum = performances.reduce((sum, perf, index) =>
       sum + (perf * timeWeights[index] * difficultyWeights[difficulty]), 0);
     const totalWeight = timeWeights.reduce((sum, weight) => sum + weight, 0) * difficultyWeights[difficulty];
-    
+
     return Math.round((weightedSum / totalWeight) * 10) / 10;
   };
 
   const getAdaptiveQuestions = (topic?: string) => {
     if (!assessmentData) return { easyRatio: 0.5, mediumRatio: 0.3, hardRatio: 0.2, adaptedFor: 'unknown' };
-    
-    const topicData = topic ? 
-      assessmentData.topicScores.find(t => t.topic === topic) : 
+
+    const topicData = topic ?
+      assessmentData.topicScores.find(t => t.topic === topic) :
       assessmentData.topicScores[0];
-    
+
     if (!topicData) return { easyRatio: 0.5, mediumRatio: 0.3, hardRatio: 0.2, adaptedFor: 'unknown' };
 
     const score = topicData.score;
     let easyRatio = 0.5, mediumRatio = 0.3, hardRatio = 0.2;
-    
+
     if (score < 4) {
       easyRatio = 0.7; mediumRatio = 0.25; hardRatio = 0.05;
     } else if (score < 7) {

@@ -18,8 +18,8 @@ const Footer: React.FC = () => {
               <span className="text-lg font-semibold text-gray-900">Derivativ</span>
             </div>
             <p className="text-gray-600 text-sm leading-relaxed mb-4">
-              AI-powered math tutor for Cambridge IGCSE Mathematics. 
-              Generate high-quality questions with multi-agent coordination 
+              AI-powered math tutor for Cambridge IGCSE Mathematics.
+              Generate high-quality questions with multi-agent coordination
               and real-time quality control.
             </p>
             <div className="flex space-x-4">
@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
           </div>
 
           {/* Quick Links */}
-          <div>
+          {/* <div>
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
               Quick Links
             </h3>
@@ -79,10 +79,10 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Resources */}
-          <div>
+          {/* <div>
             <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
               Resources
             </h3>
@@ -123,7 +123,7 @@ const Footer: React.FC = () => {
                 </a>
               </li>
             </ul>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom Bar */}

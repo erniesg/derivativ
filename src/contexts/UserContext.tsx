@@ -23,7 +23,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<'student' | 'teacher'>('teacher');
+  const [userRole, setUserRole] = useState<'student' | 'teacher'>('student');
 
   return (
     <UserContext.Provider value={{ user, setUser, userRole, setUserRole }}>

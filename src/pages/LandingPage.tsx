@@ -111,7 +111,7 @@ const LandingPage: React.FC = () => {
     : { primary: 'green', secondary: 'emerald', gradient: 'from-green-600 to-emerald-600' };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="max-h-screen bg-gradient-to-br from-gray-50 to-white">
       {/* Bolt.new Badge */}
       <BoltBadge variant="black" position="bottom-right" />
 
@@ -304,7 +304,7 @@ const LandingPage: React.FC = () => {
                 </>
               )}
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   School (optional)
                 </label>
@@ -315,7 +315,7 @@ const LandingPage: React.FC = () => {
                   placeholder={isStudent ? "e.g., Singapore International School" : "e.g., Cambridge International School"}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
-              </div>
+              </div> */}
 
               {isStudent && (
                 <button

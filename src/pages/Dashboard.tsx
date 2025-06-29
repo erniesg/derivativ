@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-6 lg:mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6 mb-6 lg:mb-8">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -132,7 +132,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+            {/* <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs lg:text-sm text-gray-600 mb-1">Time to Exam</p>
@@ -142,7 +142,7 @@ const Dashboard: React.FC = () => {
                   <Clock className="w-4 h-4 lg:w-6 lg:h-6 text-purple-600" />
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="grid lg:grid-cols-3 gap-4 lg:gap-8">
