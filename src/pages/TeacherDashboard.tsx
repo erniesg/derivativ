@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { FileText, Download, Users, BarChart3, Plus, Filter } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Download, Users, BarChart3, Plus, Filter, ExternalLink } from 'lucide-react';
 
 interface GeneratedMaterial {
   id: string;
@@ -9,6 +9,13 @@ interface GeneratedMaterial {
   difficulty: string;
   createdAt: Date;
   downloads: number;
+  document_id?: string;
+  available_formats?: string[];
+  r2_files?: Array<{
+    format: string;
+    version: string;
+    download_url?: string;
+  }>;
 }
 
 const TeacherDashboard: React.FC = () => {
@@ -16,41 +23,64 @@ const TeacherDashboard: React.FC = () => {
   const [detailLevel, setDetailLevel] = useState(5);
   const [targetLevel, setTargetLevel] = useState('IGCSE');
   const [materialType, setMaterialType] = useState('worksheet');
+  const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedMaterial[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
 
   const topics = [
     'Algebra', 'Geometry', 'Trigonometry', 'Statistics', 
     'Number Theory', 'Calculus', 'Probability', 'Functions'
   ];
 
-  const recentMaterials: GeneratedMaterial[] = [
-    {
-      id: '1',
-      title: 'Quadratic Equations Worksheet',
-      type: 'worksheet',
-      topics: ['Algebra'],
-      difficulty: 'Medium',
-      createdAt: new Date(2024, 0, 15),
-      downloads: 23
-    },
-    {
-      id: '2',
-      title: 'Triangle Properties Notes',
-      type: 'notes',
-      topics: ['Geometry'],
-      difficulty: 'Easy',
-      createdAt: new Date(2024, 0, 14),
-      downloads: 15
-    },
-    {
-      id: '3',
-      title: 'Statistics Assessment',
-      type: 'assessment',
-      topics: ['Statistics', 'Probability'],
-      difficulty: 'Hard',
-      createdAt: new Date(2024, 0, 13),
-      downloads: 8
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+  // Load available documents from R2 on component mount
+  useEffect(() => {
+    loadAvailableDocuments();
+  }, []);
+
+  const loadAvailableDocuments = async () => {
+    setIsLoadingDocuments(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/documents/available`);
+      if (response.ok) {
+        const data = await response.json();
+        const documents: GeneratedMaterial[] = data.documents.map((doc: any) => ({
+          id: doc.document_id,
+          document_id: doc.document_id,
+          title: doc.document_id.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+          type: doc.document_type as 'worksheet' | 'notes' | 'assessment',
+          topics: [doc.document_type.replace('_', ' ')],
+          difficulty: 'Medium',
+          createdAt: new Date(doc.last_modified),
+          downloads: 0,
+          available_formats: doc.available_formats,
+          r2_files: []
+        }));
+        setGeneratedDocuments(documents);
+      }
+    } catch (error) {
+      console.error('Failed to load documents:', error);
     }
-  ];
+    setIsLoadingDocuments(false);
+  };
+
+  const handleDownload = async (documentId: string, format: string = 'html', version: string = 'student') => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}/download?format=${format}&version=${version}`);
+      if (response.ok) {
+        const data = await response.json();
+        // Open the presigned URL in a new tab
+        window.open(data.download_url, '_blank');
+      } else {
+        throw new Error('Failed to get download URL');
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Download failed. Please try again.');
+    }
+  };
+
 
   const handleTopicToggle = (topic: string) => {
     setSelectedTopics(prev => 
@@ -66,12 +96,7 @@ const TeacherDashboard: React.FC = () => {
       return;
     }
 
-    console.log('Generating material with:', {
-      topics: selectedTopics,
-      detailLevel,
-      targetLevel,
-      materialType
-    });
+    setIsGenerating(true);
 
     try {
       // Map frontend values to backend API format
@@ -80,7 +105,7 @@ const TeacherDashboard: React.FC = () => {
         detail_level: detailLevel <= 3 ? 'minimal' : detailLevel <= 7 ? 'medium' : 'comprehensive' as 'minimal' | 'medium' | 'comprehensive',
         title: `${selectedTopics.join(' & ')} ${materialType.charAt(0).toUpperCase() + materialType.slice(1)}`,
         topic: selectedTopics.join(', ').toLowerCase().replace(/\s+/g, '_'),
-        tier: 'core' as const,
+        tier: 'Core' as const,
         grade_level: targetLevel === 'IGCSE' ? 7 : targetLevel === 'A-Level' ? 12 : 10,
         auto_include_questions: true,
         max_questions: materialType === 'notes' ? 3 : 5,
@@ -89,11 +114,10 @@ const TeacherDashboard: React.FC = () => {
         include_working: detailLevel > 5
       };
 
-      console.log('Sending request to API:', requestData);
+      console.log('Generating document:', requestData);
 
-      // Call the document generation API
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-      const response = await fetch(`${API_BASE_URL}/api/documents/generate`, {
+      // Call the correct document generation API endpoint
+      const response = await fetch(`${API_BASE_URL}/api/generation/documents/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,17 +134,55 @@ const TeacherDashboard: React.FC = () => {
       console.log('Document generated successfully:', result);
 
       if (result.success) {
-        alert(`✅ ${result.document.title} generated successfully!\n` +
+        // Export to HTML format for quick viewing
+        const exportRequest = {
+          document_id: result.document.document_id,
+          format: 'html',
+          version: 'student'
+        };
+
+        console.log('Exporting document to R2:', exportRequest);
+        const exportResponse = await fetch(`${API_BASE_URL}/api/generation/documents/export`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(exportRequest),
+        });
+
+        if (exportResponse.ok) {
+          const exportResult = await exportResponse.json();
+          console.log('Document exported to R2:', exportResult);
+        }
+
+        // Add to generated documents
+        const newDocument: GeneratedMaterial = {
+          id: result.document.document_id,
+          document_id: result.document.document_id,
+          title: result.document.title,
+          type: materialType as 'worksheet' | 'notes' | 'assessment',
+          topics: selectedTopics,
+          difficulty: detailLevel <= 3 ? 'Easy' : detailLevel <= 7 ? 'Medium' : 'Hard',
+          createdAt: new Date(),
+          downloads: 0,
+          available_formats: ['html'],
+          r2_files: []
+        };
+
+        setGeneratedDocuments(prev => [newDocument, ...prev]);
+
+        alert(`✅ ${result.document.title} generated and exported successfully!\n` +
               `Processing time: ${result.processing_time.toFixed(2)}s\n` +
-              `Sections: ${result.sections_generated}\n` +
-              `Estimated duration: ${result.document.estimated_duration} minutes`);
+              `Document is now available for download.`);
       } else {
         throw new Error(result.error_message || 'Document generation failed');
       }
 
     } catch (error) {
       console.error('Error generating material:', error);
-      alert(`❌ Failed to generate material: ${error instanceof Error ? error.message : 'Unknown error'}\n\nMake sure the API server is running at http://localhost:8000`);
+      alert(`❌ Failed to generate material: ${error instanceof Error ? error.message : 'Unknown error'}\n\nMake sure the API server is running at ${API_BASE_URL}`);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -281,15 +343,24 @@ const TeacherDashboard: React.FC = () => {
               {/* Generate Button */}
               <button
                 onClick={generateMaterial}
-                disabled={selectedTopics.length === 0}
+                disabled={selectedTopics.length === 0 || isGenerating}
                 className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-200 ${
-                  selectedTopics.length > 0
+                  selectedTopics.length > 0 && !isGenerating
                     ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:shadow-lg transform hover:scale-[1.02]'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <Plus className="inline-block w-5 h-5 mr-2" />
-                Generate Material
+                {isGenerating ? (
+                  <>
+                    <div className="inline-block w-5 h-5 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="inline-block w-5 h-5 mr-2" />
+                    Generate Material
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -297,52 +368,91 @@ const TeacherDashboard: React.FC = () => {
           {/* Recent Materials */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Recent Materials</h2>
-              <button className="text-sm text-gray-600 hover:text-gray-800">
-                <Filter size={16} />
+              <h2 className="text-xl font-semibold text-gray-900">
+                Generated Materials ({generatedDocuments.length})
+              </h2>
+              <button 
+                onClick={loadAvailableDocuments}
+                className="text-sm text-gray-600 hover:text-gray-800"
+                disabled={isLoadingDocuments}
+              >
+                {isLoadingDocuments ? (
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-600 border-t-transparent"></div>
+                ) : (
+                  <Filter size={16} />
+                )}
               </button>
             </div>
 
             <div className="space-y-4">
-              {recentMaterials.map((material) => (
-                <div
-                  key={material.id}
-                  className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <div className="text-green-600">
-                        {getMaterialIcon(material.type)}
-                      </div>
-                      <h3 className="font-medium text-gray-900 text-sm">{material.title}</h3>
-                    </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <Download size={16} />
-                    </button>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {material.topics.map((topic) => (
-                      <span
-                        key={topic}
-                        className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
-                      >
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>{material.difficulty}</span>
-                    <span>{material.downloads} downloads</span>
-                  </div>
+              {generatedDocuments.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="text-sm">No materials generated yet.</p>
+                  <p className="text-xs">Generate your first material to see it here!</p>
                 </div>
-              ))}
+              ) : (
+                generatedDocuments.slice(0, 5).map((material) => (
+                  <div
+                    key={material.id}
+                    className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="text-green-600">
+                          {getMaterialIcon(material.type)}
+                        </div>
+                        <h3 className="font-medium text-gray-900 text-sm">{material.title}</h3>
+                      </div>
+                      <div className="flex space-x-1">
+                        {material.available_formats?.includes('html') && (
+                          <button 
+                            onClick={() => handleDownload(material.document_id!, 'html', 'student')}
+                            className="text-blue-600 hover:text-blue-700 p-1 rounded"
+                            title="Download HTML (Student)"
+                          >
+                            <ExternalLink size={14} />
+                          </button>
+                        )}
+                        {material.available_formats?.includes('html') && (
+                          <button 
+                            onClick={() => handleDownload(material.document_id!, 'html', 'teacher')}
+                            className="text-green-600 hover:text-green-700 p-1 rounded"
+                            title="Download HTML (Teacher)"
+                          >
+                            <Download size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {material.topics.map((topic) => (
+                        <span
+                          key={topic}
+                          className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>{material.difficulty}</span>
+                      <span>
+                        {material.available_formats?.length || 0} format{(material.available_formats?.length || 0) !== 1 ? 's' : ''} available
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            <button className="w-full mt-4 py-2 text-sm text-green-600 hover:text-green-700 font-medium">
-              View All Materials →
-            </button>
+            {generatedDocuments.length > 5 && (
+              <button className="w-full mt-4 py-2 text-sm text-green-600 hover:text-green-700 font-medium">
+                View All Materials ({generatedDocuments.length}) →
+              </button>
+            )}
           </div>
         </div>
       </main>
