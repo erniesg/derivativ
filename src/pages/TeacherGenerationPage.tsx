@@ -77,24 +77,33 @@ const TeacherGenerationPage: React.FC = () => {
             </div>
             
             {/* Generator Mode Toggle */}
-            <div className="flex items-center space-x-3">
-              <span className="text-sm font-medium text-gray-600">Basic</span>
+            <div className="flex bg-gray-100 rounded-lg p-1">
               <button
-                onClick={() => setUseRichGenerator(!useRichGenerator)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                  useRichGenerator ? 'bg-green-600' : 'bg-gray-200'
+                onClick={() => setUseRichGenerator(false)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 ${
+                  !useRichGenerator
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    useRichGenerator ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                </svg>
+                <span className="font-medium">Database</span>
               </button>
-              <span className="text-sm font-medium text-gray-600 flex items-center">
-                <Sparkles className="w-4 h-4 mr-1" />
-                Rich
-              </span>
+              <button
+                onClick={() => setUseRichGenerator(true)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 ${
+                  useRichGenerator
+                    ? 'bg-green-500 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">Live</span>
+              </button>
             </div>
           </div>
         </div>
@@ -109,7 +118,7 @@ const TeacherGenerationPage: React.FC = () => {
               />
             ) : (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">Basic Generator</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Database Search & Generate</h3>
                 <GenerationForm
                   onGenerate={handleGenerate}
                   generationState={generationState}
