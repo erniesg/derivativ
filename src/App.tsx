@@ -23,7 +23,8 @@ function App() {
           <Router>
             <Layout>
               <Routes>
-                <Route path="/" element={<LandingPage />} />
+                <Route path="/" element={<TeacherGenerationPage />} />
+                <Route path="/landing" element={<LandingPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/practice" element={<Practice />} />
                 {getFeatureFlag('LEARN_PAGE') && (

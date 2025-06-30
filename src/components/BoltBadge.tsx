@@ -22,8 +22,8 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({
 
   const sizeClasses = {
     'sm': 'w-8 h-8',
-    'md': 'w-16 h-16', // Increased from w-12 h-12 (48px) to w-16 h-16 (64px) = 33% bigger
-    'lg': 'w-20 h-20'
+    'md': 'w-24 h-24', // 90x90 pixels (w-24 h-24)
+    'lg': 'w-28 h-28'
   };
 
   const getBadgeContent = () => {
