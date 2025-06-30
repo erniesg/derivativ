@@ -64,6 +64,7 @@ const TierSelector: React.FC<TierSelectorProps> = ({
           return (
             <button
               key={tier.id}
+              type="button"
               onClick={() => onTierChange(tier.id)}
               className={`
                 flex-1 flex items-center justify-center space-x-3 px-6 py-4 rounded-md transition-all duration-200

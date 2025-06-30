@@ -144,7 +144,6 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
     <div className={`space-y-6 ${className}`}>
       {/* Generation Form */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Generate Rich Educational Material</h2>
         
         <GenerationForm
           onGenerate={handleGenerate}
@@ -205,12 +204,14 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
                   {/* Action Buttons */}
                   <div className="flex space-x-2">
                     <button
+                      type="button"
                       onClick={handleClear}
                       className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded"
                     >
                       Clear
                     </button>
                     <button
+                      type="button"
                       onClick={handleRetry}
                       className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded"
                     >

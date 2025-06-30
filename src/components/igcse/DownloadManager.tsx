@@ -70,8 +70,11 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
   };
 
   const downloadFile = async (format: string) => {
+    console.log(`🚀 Starting download for format: ${format}`);
+    console.log('📄 Available data:', { documentId, hasGeneratedContent: !!generatedContent });
+    
     if (!documentId && !generatedContent) {
-      console.error('No document ID or content available for download');
+      console.error('❌ No document ID or content available for download');
       return;
     }
 
@@ -80,14 +83,24 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
     try {
       // First, check if downloads are already available from the new API response
       if (generatedContent?.downloads && generatedContent.downloads[format as keyof typeof generatedContent.downloads]) {
+        console.log(`✅ Found pre-generated downloads for ${format}`);
         const downloadInfo = generatedContent.downloads[format as keyof typeof generatedContent.downloads];
+        console.log('📋 Download info:', downloadInfo);
+        
         if (downloadInfo?.available && downloadInfo.download_url) {
-          console.log(`Using pre-generated download URL for ${format}:`, downloadInfo.download_url);
-          triggerDownload(downloadInfo.download_url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+          console.log(`🎯 Using pre-generated download URL for ${format}:`, downloadInfo.download_url);
+          
+          // For remote URLs, fetch and create blob to force download
+          await downloadFromUrl(downloadInfo.download_url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`, format);
+          
           updateDownloadState(format, 'success');
           setTimeout(() => updateDownloadState(format, 'idle'), 3000);
           return;
+        } else {
+          console.log(`⚠️ Download not available or missing URL for ${format}`);
         }
+      } else {
+        console.log(`❌ No pre-generated downloads found for ${format}`);
       }
 
       // If we have a markdown_content from the new API, prioritize that for client-side generation
@@ -570,13 +583,42 @@ ${400 + pdfContent.length}
     return markdown;
   };
 
+  const downloadFromUrl = async (url: string, filename: string, format: string) => {
+    console.log(`🔍 Attempting to download ${format} from: ${url}`);
+    
+    // Simple approach: just open the presigned URL in a new tab
+    // The browser will handle the download if Content-Disposition is set correctly
+    console.log('🚀 Opening presigned URL in new tab...');
+    window.open(url, '_blank');
+    
+    console.log('✅ Download initiated in new tab');
+  };
+  
+
   const triggerDownload = (url: string, filename: string) => {
+    console.log(`💾 Creating download link for: ${filename}`);
+    console.log(`🔗 URL type: ${url.startsWith('blob:') ? 'blob' : 'direct'}`, url);
+    
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
+    link.style.display = 'none';
+    link.target = '_self'; // Ensure it doesn't open in new tab
+    
+    // Additional attributes to force download
+    link.setAttribute('rel', 'noopener noreferrer');
+    
+    console.log('🖱️ Link created with attributes:', {
+      href: link.href,
+      download: link.download,
+      target: link.target
+    });
+    
     document.body.appendChild(link);
+    console.log('👆 Clicking download link...');
     link.click();
     document.body.removeChild(link);
+    console.log('🗑️ Link removed from DOM');
   };
 
   const hasContent = Boolean(documentId || generatedContent);
@@ -611,6 +653,7 @@ ${400 + pdfContent.length}
               return (
                 <button
                   key={format.value}
+                  type="button"
                   onClick={() => setSelectedFormat(format.value)}
                   className={`
                     p-4 rounded-lg border-2 text-left transition-all duration-200
@@ -667,6 +710,7 @@ ${400 + pdfContent.length}
             File will be saved as: <span className="font-mono">{documentTitle}.{EXPORT_FORMATS.find(f => f.value === selectedFormat)?.extension}</span>
           </div>
           <button
+            type="button"
             onClick={() => downloadFile(selectedFormat)}
             disabled={downloadStates[selectedFormat] === 'loading'}
             className={`

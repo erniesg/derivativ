@@ -18,7 +18,6 @@ interface GenerationFormProps {
 }
 
 interface FormState {
-  title: string;
   documentType: DocumentType;
   selectedTopics: TopicName[];
   selectedTier: Tier;
@@ -62,7 +61,6 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
   className = ''
 }) => {
   const [formState, setFormState] = useState<FormState>({
-    title: '',
     documentType: DocumentType.WORKSHEET,
     selectedTopics: [],
     selectedTier: Tier.CORE,
@@ -82,9 +80,6 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
       errors.push('Please select at least one topic');
     }
     
-    if (!formState.title.trim()) {
-      errors.push('Please enter a title for your material');
-    }
     
     if (formState.maxQuestions < 1 || formState.maxQuestions > 20) {
       errors.push('Number of questions must be between 1 and 20');
@@ -104,7 +99,7 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
     const request: DocumentGenerationRequest = {
       document_type: formState.documentType,
       detail_level: formState.detailLevel,
-      title: formState.title,
+      title: `${formState.documentType} - ${formState.selectedTopics.join(', ')}`,
       topic: formState.selectedTopics.join(', '),
       tier: formState.selectedTier,
       grade_level: formState.selectedTier === Tier.CORE ? "7-9" : "9-10", // Convert to string format expected by backend
@@ -129,62 +124,7 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-8 ${className}`}>
-      {/* Database vs Live Toggle */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Generation Mode</h3>
-        <div className="flex bg-gray-100 rounded-full p-1 w-fit">
-          <button
-            type="button"
-            onClick={() => updateFormState({ useDatabase: true })}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-full transition-all duration-300 ${
-              formState.useDatabase
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-            </svg>
-            <span className="font-medium">Database</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => updateFormState({ useDatabase: false })}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-full transition-all duration-300 ${
-              !formState.useDatabase
-                ? 'bg-green-500 text-white shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-            </svg>
-            <span className="font-medium">Live</span>
-          </button>
-        </div>
-        <p className="text-sm text-gray-600">
-          {formState.useDatabase 
-            ? 'Search existing materials first, generate if not found'
-            : 'Generate fresh content using AI agents'
-          }
-        </p>
-      </div>
 
-      {/* Document Title */}
-      <div className="space-y-2">
-        <label htmlFor="title" className="block text-lg font-semibold text-gray-900">
-          Document Title
-        </label>
-        <input
-          id="title"
-          type="text"
-          value={formState.title}
-          onChange={(e) => updateFormState({ title: e.target.value })}
-          placeholder="e.g., IGCSE Algebra Practice Sheet"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          disabled={isGenerating}
-        />
-      </div>
 
       {/* Document Type Selection */}
       <div className="space-y-4">

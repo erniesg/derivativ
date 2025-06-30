@@ -82,6 +82,7 @@ const DetailLevelSlider: React.FC<DetailLevelSliderProps> = ({
             return (
               <button
                 key={`level-${level.value}-${index}`}
+                type="button"
                 onClick={() => onLevelChange(level.value)}
                 className={`
                   relative flex flex-col items-center space-y-2 transition-all duration-200
