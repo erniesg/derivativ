@@ -42,6 +42,12 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
 
   // Enhanced generation with progress tracking
   const handleGenerate = useCallback(async (request: DocumentGenerationRequest) => {
+    console.log('🔥 GENERATION TRIGGERED:', {
+      request,
+      timestamp: new Date().toISOString(),
+      callStack: new Error().stack
+    });
+    
     setGenerationState('loading');
     setError(null);
     setGenerationResult(null);

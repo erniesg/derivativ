@@ -74,6 +74,7 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
   });
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [userInitiatedGeneration, setUserInitiatedGeneration] = useState(false);
 
   const validateForm = (): boolean => {
     const errors: string[] = [];
@@ -97,7 +98,16 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Safety check: Only allow generation if user explicitly clicked the generate button
+    if (!userInitiatedGeneration) {
+      console.warn('🚫 Generation blocked: User did not explicitly click generate button');
+      return;
+    }
+    
+    console.log('✅ Generation allowed: User explicitly clicked generate button');
+    
     if (!validateForm()) {
+      setUserInitiatedGeneration(false); // Reset flag if validation fails
       return;
     }
 
@@ -117,7 +127,11 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
       use_database: formState.useDatabase
     };
 
-    await onGenerate(request);
+    try {
+      await onGenerate(request);
+    } finally {
+      setUserInitiatedGeneration(false); // Reset flag after generation attempt
+    }
   };
 
   const updateFormState = (updates: Partial<FormState>) => {
@@ -129,46 +143,6 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-8 ${className}`}>
-      {/* Database vs Live Toggle */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Generation Mode</h3>
-        <div className="flex bg-gray-100 rounded-full p-1 w-fit">
-          <button
-            type="button"
-            onClick={() => updateFormState({ useDatabase: true })}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-full transition-all duration-300 ${
-              formState.useDatabase
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-            </svg>
-            <span className="font-medium">Database</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => updateFormState({ useDatabase: false })}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-full transition-all duration-300 ${
-              !formState.useDatabase
-                ? 'bg-green-500 text-white shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-            </svg>
-            <span className="font-medium">Live</span>
-          </button>
-        </div>
-        <p className="text-sm text-gray-600">
-          {formState.useDatabase 
-            ? 'Search existing materials first, generate if not found'
-            : 'Generate fresh content using AI agents'
-          }
-        </p>
-      </div>
 
       {/* Document Title */}
       <div className="space-y-2">
@@ -312,6 +286,10 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
         <button
           type="submit"
           disabled={isGenerating}
+          onClick={() => {
+            console.log('🎯 User clicked generate button');
+            setUserInitiatedGeneration(true);
+          }}
           className={`
             px-12 py-4 rounded-xl font-semibold text-white transition-all duration-200 shadow-lg
             ${isGenerating

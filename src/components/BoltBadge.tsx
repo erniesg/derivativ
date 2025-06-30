@@ -4,7 +4,7 @@ interface BoltBadgeProps {
   variant?: 'white' | 'black' | 'text';
   position?: 'top-right' | 'bottom-right' | 'bottom-left' | 'top-left';
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 const BoltBadge: React.FC<BoltBadgeProps> = ({ 
@@ -23,7 +23,8 @@ const BoltBadge: React.FC<BoltBadgeProps> = ({
   const sizeClasses = {
     'sm': 'w-8 h-8',
     'md': 'w-12 h-12',
-    'lg': 'w-16 h-16'
+    'lg': 'w-16 h-16',
+    'xl': 'w-[300px] h-[300px]'
   };
 
   const getBadgeContent = () => {

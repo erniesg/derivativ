@@ -32,7 +32,7 @@ const Footer: React.FC = () => {
                 <Github size={20} />
               </a>
               <a
-                href="mailto:hello@derivativ.ai"
+                href="mailto:hello@ernie.sg"
                 className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
               >
                 <Mail size={20} />
@@ -132,18 +132,7 @@ const Footer: React.FC = () => {
             © {currentYear} Derivativ AI. Built with multi-agent coordination.
           </p>
           <div className="flex space-x-6 mt-4 sm:mt-0">
-            <a
-              href="#"
-              className="text-gray-500 hover:text-gray-700 text-sm transition-colors duration-200"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#"
-              className="text-gray-500 hover:text-gray-700 text-sm transition-colors duration-200"
-            >
-              Terms of Service
-            </a>
+            {/* Links removed as requested */}
           </div>
         </div>
       </div>

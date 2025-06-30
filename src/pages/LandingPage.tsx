@@ -113,7 +113,7 @@ const LandingPage: React.FC = () => {
   return (
     <div className="max-h-screen bg-gradient-to-br from-gray-50 to-white">
       {/* Bolt.new Badge */}
-      <BoltBadge variant="black" position="bottom-right" />
+      <BoltBadge variant="black" position="bottom-right" size="xl" />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
