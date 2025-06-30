@@ -29,9 +29,17 @@ class ApiService {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('❌ API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: errorData,
+          url: url
+        });
+        console.error('❌ Full Error Details:', JSON.stringify(errorData, null, 2));
         throw new Error(
           errorData.detail || 
           errorData.message || 
+          JSON.stringify(errorData) ||
           `HTTP ${response.status}: ${response.statusText}`
         );
       }
@@ -82,10 +90,31 @@ class ApiService {
     return this.authenticatedRequest<any>('/api/users/assessment-data', authToken);
   }
 
+  private mapDetailLevelToBackend(frontendLevel: string | number): number {
+    // Map frontend DetailLevel strings to backend integers
+    if (typeof frontendLevel === 'number') return frontendLevel;
+    
+    const mapping: Record<string, number> = {
+      'minimal': 1,
+      'medium': 5, 
+      'comprehensive': 9,
+      'guided': 10
+    };
+    
+    return mapping[frontendLevel] || 5; // Default to medium
+  }
+
   async generateDocument(request: DocumentGenerationRequest): Promise<ApiResponse<DocumentGenerationResult>> {
-    return this.request<DocumentGenerationResult>('/api/documents/generate', {
+    // Convert request to match backend expectations
+    const backendRequest = {
+      ...request,
+      detail_level: this.mapDetailLevelToBackend(request.detail_level as any)
+    };
+    
+    console.log('🚀 Frontend sending request:', JSON.stringify(backendRequest, null, 2));
+    return this.request<DocumentGenerationResult>('/api/generation/documents/generate', {
       method: 'POST',
-      body: JSON.stringify(request)
+      body: JSON.stringify(backendRequest)
     });
   }
 
@@ -94,7 +123,7 @@ class ApiService {
   }
 
   async exportDocument(documentId: string, format: string): Promise<ApiResponse<any>> {
-    return this.request<any>('/api/documents/export', {
+    return this.request<any>('/api/generation/documents/export', {
       method: 'POST',
       body: JSON.stringify({
         document_id: documentId,

@@ -15,7 +15,7 @@ const DETAIL_LEVELS: DetailLevelInfo[] = [
     value: DetailLevel.MINIMAL,
     label: 'Minimal',
     description: 'Key points only, quick overview',
-    estimatedTime: '5-15 min',
+    estimatedTime: '5-10 min',
     icon: '⚡',
     features: ['Essential concepts', 'Brief explanations', 'Key formulas']
   },
@@ -23,22 +23,22 @@ const DETAIL_LEVELS: DetailLevelInfo[] = [
     value: DetailLevel.MEDIUM,
     label: 'Medium',
     description: 'Moderate detail with examples',
-    estimatedTime: '15-30 min',
+    estimatedTime: '15-25 min',
     icon: '⚖️',
     features: ['Detailed explanations', 'Worked examples', 'Practice questions']
   },
   {
     value: DetailLevel.COMPREHENSIVE,
     label: 'Comprehensive',
-    description: 'Full detail with solutions',
-    estimatedTime: '30+ min',
+    description: 'Full detail with solutions and extensions',
+    estimatedTime: '35+ min',
     icon: '📚',
     features: ['Complete coverage', 'Multiple examples', 'Detailed solutions', 'Additional context']
   },
   {
     value: DetailLevel.GUIDED,
     label: 'Guided',
-    description: 'Step-by-step guidance',
+    description: 'Step-by-step guidance with scaffolding',
     estimatedTime: '20-30 min',
     icon: '🎯',
     features: ['Step-by-step approach', 'Learning scaffolding', 'Progressive difficulty']
@@ -81,7 +81,7 @@ const DetailLevelSlider: React.FC<DetailLevelSliderProps> = ({
             
             return (
               <button
-                key={level.value}
+                key={`level-${level.value}-${index}`}
                 onClick={() => onLevelChange(level.value)}
                 className={`
                   relative flex flex-col items-center space-y-2 transition-all duration-200

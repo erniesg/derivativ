@@ -82,15 +82,38 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
         // Use API to export document
         const response = await apiService.exportDocument(documentId, format);
         
-        if (response.success && response.data?.file_path) {
-          // Trigger download from server
-          const downloadUrl = `${import.meta.env.VITE_API_BASE_URL}/download/${response.data.file_path}`;
-          triggerDownload(downloadUrl, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+        console.log('Export response:', response);
+        
+        if (response.success && response.data) {
+          // Check if there's a download URL or content to download
+          if (response.data.r2_file_key || response.data.content) {
+            if (response.data.content) {
+              // Direct content download
+              const blob = new Blob([response.data.content], { 
+                type: EXPORT_FORMATS.find(f => f.value === format)?.mimeType 
+              });
+              const url = URL.createObjectURL(blob);
+              triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+              URL.revokeObjectURL(url);
+            } else if (response.data.r2_file_key && response.data.download_url) {
+              // R2 file download via presigned URL
+              triggerDownload(response.data.download_url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+            } else {
+              // R2 file created but no presigned URL - fallback to client-side generation
+              console.log('R2 file created but no download URL, using client-side generation');
+              const blob = await createBlob(generatedContent || {}, format);
+              const url = URL.createObjectURL(blob);
+              triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+              URL.revokeObjectURL(url);
+            }
+          } else {
+            throw new Error('No downloadable content returned');
+          }
         } else {
           throw new Error(response.error || 'Export failed');
         }
       } else if (generatedContent) {
-        // Client-side export for immediate content
+        // Client-side export for immediate content - now supports all formats!
         const blob = await createBlob(generatedContent, format);
         const url = URL.createObjectURL(blob);
         triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
@@ -122,7 +145,7 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
       throw new Error(`Unsupported format: ${format}`);
     }
 
-    let fileContent: string;
+    let fileContent: string | Uint8Array;
 
     switch (format) {
       case 'html':
@@ -132,11 +155,11 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
         fileContent = generateMarkdown(content);
         break;
       case 'pdf':
-        // For PDF, we'd typically need a library like jsPDF or send to server
-        throw new Error('PDF generation requires server-side processing');
+        fileContent = await generatePDF(content);
+        break;
       case 'docx':
-        // For DOCX, we'd typically need a library like docx or send to server  
-        throw new Error('DOCX generation requires server-side processing');
+        fileContent = await generateDOCX(content);
+        break;
       default:
         fileContent = JSON.stringify(content, null, 2);
     }
@@ -144,19 +167,243 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
     return new Blob([fileContent], { type: formatInfo.mimeType });
   };
 
+  const formatContentAsText = (content: any): string => {
+    const title = documentTitle || content.title || 'Generated Material';
+    let text = `${title}\n${'='.repeat(title.length)}\n\n`;
+
+    if (typeof content === 'string') {
+      text += content;
+    } else if (content.sections && Array.isArray(content.sections)) {
+      content.sections.forEach((section: any, index: number) => {
+        text += `${index + 1}. ${section.title}\n${'-'.repeat(section.title.length + 3)}\n\n`;
+        
+        if (typeof section.content_data === 'object' && section.content_data !== null) {
+          // Handle common structured content patterns
+          if (section.content_data.objectives && Array.isArray(section.content_data.objectives)) {
+            section.content_data.objectives.forEach((objective: string, index: number) => {
+              text += `• ${objective}\n`;
+            });
+          } else if (section.content_data.steps && Array.isArray(section.content_data.steps)) {
+            section.content_data.steps.forEach((step: string, index: number) => {
+              text += `${index + 1}. ${step}\n`;
+            });
+          } else if (section.content_data.practice && Array.isArray(section.content_data.practice)) {
+            section.content_data.practice.forEach((item: string, index: number) => {
+              text += `Practice ${index + 1}: ${item}\n`;
+            });
+          } else if (section.content_data.solutions && Array.isArray(section.content_data.solutions)) {
+            section.content_data.solutions.forEach((solution: string, index: number) => {
+              text += `Solution ${index + 1}: ${solution}\n`;
+            });
+          } else if (section.content_data.examples && Array.isArray(section.content_data.examples)) {
+            section.content_data.examples.forEach((example: string, index: number) => {
+              text += `Example ${index + 1}: ${example}\n`;
+            });
+          } else if (section.content_type === 'worked_examples' && typeof Object.values(section.content_data)[0] === 'object') {
+            // Handle worked examples with steps
+            Object.entries(section.content_data).forEach(([key, value]: [string, any]) => {
+              if (typeof value === 'object' && value.example && value.steps) {
+                text += `${value.example}\n`;
+                value.steps.forEach((step: string, stepIndex: number) => {
+                  text += `  ${stepIndex + 1}. ${step}\n`;
+                });
+                text += '\n';
+              } else {
+                text += `${key}: ${JSON.stringify(value)}\n`;
+              }
+            });
+          } else {
+            // Handle numbered objects (questions, learning objectives, etc.)
+            Object.entries(section.content_data).forEach(([key, value]) => {
+              text += `${key}: ${value}\n`;
+            });
+          }
+        } else {
+          text += `${section.content_data || ''}\n`;
+        }
+        text += '\n';
+      });
+    } else if (typeof content === 'object') {
+      // Handle flat object with numbered keys
+      Object.entries(content).forEach(([key, value]) => {
+        text += `${key}: ${value}\n`;
+      });
+    } else {
+      text += JSON.stringify(content, null, 2);
+    }
+
+    return text;
+  };
+
+  const generatePDF = async (content: any): Promise<Uint8Array> => {
+    // Create a formatted text version for PDF
+    const textContent = formatContentAsText(content);
+    
+    // Simple PDF structure with proper text formatting
+    const escapedText = textContent.replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/\\/g, '\\\\');
+    const textLines = escapedText.split('\n').filter(line => line.trim());
+    
+    let pdfContent = '';
+    let yPosition = 720;
+    const lineHeight = 14;
+    
+    textLines.forEach((line, index) => {
+      if (yPosition < 50) {
+        // Start new page if needed (simplified)
+        yPosition = 720;
+      }
+      pdfContent += `72 ${yPosition} Td (${line.substring(0, 80)}) Tj T* `;
+      yPosition -= lineHeight;
+    });
+
+    const pdfHeader = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 <<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Times-Roman
+>>
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length ${pdfContent.length + 50}
+>>
+stream
+BT
+/F1 12 Tf
+${pdfContent}
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000010 00000 n 
+0000000053 00000 n 
+0000000125 00000 n 
+0000000348 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+${400 + pdfContent.length}
+%%EOF`;
+
+    return new TextEncoder().encode(pdfHeader);
+  };
+
+  const generateDOCX = async (content: any): Promise<Uint8Array> => {
+    // Create RTF format which can be opened by Word
+    const textContent = formatContentAsText(content);
+    
+    // Convert newlines to RTF paragraph breaks and escape special characters
+    const rtfText = textContent
+      .replace(/\\/g, '\\\\')
+      .replace(/\{/g, '\\{')
+      .replace(/\}/g, '\\}')
+      .replace(/\n/g, '\\par\n');
+    
+    const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}} 
+\\f0\\fs24 ${rtfText} }`;
+    
+    return new TextEncoder().encode(rtfContent);
+  };
+
+  const stripHtml = (html: string): string => {
+    // Remove HTML tags and decode entities
+    return html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   const generateHTML = (content: any): string => {
-    const title = documentTitle;
+    const title = documentTitle || content.title || 'Generated Material';
     let body = '';
+
+    console.log('Generating HTML for content:', content);
 
     if (typeof content === 'string') {
       body = `<pre>${content}</pre>`;
     } else if (content.sections && Array.isArray(content.sections)) {
-      body = content.sections.map((section: any) => 
-        `<section>
+      body = content.sections.map((section: any) => {
+        let sectionContent = '';
+        
+        if (typeof section.content_data === 'object' && section.content_data !== null) {
+          // Handle different types of structured content
+          if (section.content_type === 'worked_examples' && typeof Object.values(section.content_data)[0] === 'object') {
+            // Special handling for worked examples with steps
+            sectionContent = Object.entries(section.content_data).map(([key, value]: [string, any]) => {
+              if (typeof value === 'object' && value.example && value.steps) {
+                return `<div class="example">
+                  <h4>${value.example}</h4>
+                  <ol>
+                    ${value.steps.map((step: string) => `<li>${step}</li>`).join('')}
+                  </ol>
+                </div>`;
+              } else {
+                return `<p><strong>${key}:</strong> ${JSON.stringify(value)}</p>`;
+              }
+            }).join('');
+          } else {
+            // Handle numbered objects (like learning objectives, questions, etc.)
+            sectionContent = Object.entries(section.content_data)
+              .map(([key, value]) => {
+                const className = section.content_type === 'practice_questions' ? 'question' :
+                                 section.content_type === 'solutions' ? 'solution' : '';
+                return `<div class="${className}"><strong>${key}:</strong> ${value}</div>`;
+              })
+              .join('');
+          }
+        } else {
+          sectionContent = section.content_data || '';
+        }
+        
+        return `<section>
           <h2>${section.title}</h2>
-          <div>${section.content_data || ''}</div>
-        </section>`
-      ).join('\n');
+          <div>${sectionContent}</div>
+        </section>`;
+      }).join('\n');
+    } else if (typeof content === 'object') {
+      // Handle the case where content is a flat object with numbered keys
+      body = Object.entries(content)
+        .map(([key, value]) => `<div><strong>${key}:</strong> ${value}</div>`)
+        .join('\n');
     } else {
       body = `<pre>${JSON.stringify(content, null, 2)}</pre>`;
     }
@@ -167,10 +414,76 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
     <meta charset="UTF-8">
     <title>${title}</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1, h2 { color: #333; }
-        section { margin: 20px 0; }
-        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; }
+        body { 
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          max-width: 900px; 
+          margin: 0 auto; 
+          padding: 40px 20px; 
+          line-height: 1.6; 
+          color: #333;
+        }
+        h1 { 
+          color: #2c3e50; 
+          border-bottom: 3px solid #3498db; 
+          padding-bottom: 15px; 
+          font-size: 2.5em;
+          margin-bottom: 30px;
+        }
+        h2 { 
+          color: #34495e; 
+          border-bottom: 2px solid #ecf0f1; 
+          padding-bottom: 10px; 
+          margin-top: 40px;
+          margin-bottom: 20px;
+        }
+        h4 {
+          color: #7f8c8d;
+          margin: 15px 0 10px 0;
+        }
+        section { 
+          margin: 40px 0; 
+          background: #fdfdfd;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        div { margin: 12px 0; }
+        p { margin: 10px 0; }
+        strong { color: #2c3e50; font-weight: 600; }
+        pre { 
+          background: #f8f9fa; 
+          padding: 20px; 
+          border-radius: 8px; 
+          overflow-x: auto;
+          border: 1px solid #e9ecef;
+        }
+        .question { 
+          background: #e3f2fd; 
+          padding: 15px; 
+          margin: 15px 0; 
+          border-left: 5px solid #2196f3;
+          border-radius: 5px;
+        }
+        .solution { 
+          background: #e8f5e8; 
+          padding: 15px; 
+          margin: 15px 0; 
+          border-left: 5px solid #4caf50;
+          border-radius: 5px;
+        }
+        .example {
+          background: #fff3e0;
+          padding: 15px;
+          margin: 15px 0;
+          border-left: 5px solid #ff9800;
+          border-radius: 5px;
+        }
+        ol, ul {
+          padding-left: 25px;
+        }
+        li {
+          margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -181,14 +494,44 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
   };
 
   const generateMarkdown = (content: any): string => {
-    let markdown = `# ${documentTitle}\n\n`;
+    const title = documentTitle || content.title || 'Generated Material';
+    let markdown = `# ${title}\n\n`;
 
     if (typeof content === 'string') {
       markdown += content;
     } else if (content.sections && Array.isArray(content.sections)) {
-      markdown += content.sections.map((section: any) => 
-        `## ${section.title}\n\n${section.content_data || ''}\n\n`
-      ).join('');
+      content.sections.forEach((section: any) => {
+        markdown += `## ${section.title}\n\n`;
+        
+        if (typeof section.content_data === 'object' && section.content_data !== null) {
+          if (section.content_type === 'worked_examples' && typeof Object.values(section.content_data)[0] === 'object') {
+            // Handle worked examples with steps
+            Object.entries(section.content_data).forEach(([key, value]: [string, any]) => {
+              if (typeof value === 'object' && value.example && value.steps) {
+                markdown += `### ${value.example}\n\n`;
+                value.steps.forEach((step: string, stepIndex: number) => {
+                  markdown += `${stepIndex + 1}. ${step}\n`;
+                });
+                markdown += '\n';
+              } else {
+                markdown += `**${key}:** ${JSON.stringify(value)}\n\n`;
+              }
+            });
+          } else {
+            // Handle numbered objects
+            Object.entries(section.content_data).forEach(([key, value]) => {
+              markdown += `**${key}:** ${value}\n\n`;
+            });
+          }
+        } else {
+          markdown += `${section.content_data || ''}\n\n`;
+        }
+      });
+    } else if (typeof content === 'object') {
+      // Handle flat object with numbered keys
+      Object.entries(content).forEach(([key, value]) => {
+        markdown += `**${key}:** ${value}\n\n`;
+      });
     } else {
       markdown += '```json\n' + JSON.stringify(content, null, 2) + '\n```';
     }

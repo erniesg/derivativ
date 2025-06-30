@@ -8,11 +8,14 @@ import { apiService } from '../services/api';
 import GenerationForm from '../components/igcse/GenerationForm';
 import MaterialPreview from '../components/igcse/MaterialPreview';
 import DownloadManager from '../components/igcse/DownloadManager';
+import RichMaterialGenerator from '../components/igcse/RichMaterialGenerator';
+import { Sparkles } from 'lucide-react';
 
 const TeacherGenerationPage: React.FC = () => {
   const [generationState, setGenerationState] = useState<GenerationState>('idle');
   const [generationResult, setGenerationResult] = useState<DocumentGenerationResult | null>(null);
   const [lastRequest, setLastRequest] = useState<DocumentGenerationRequest | null>(null);
+  const [useRichGenerator, setUseRichGenerator] = useState(true); // Default to rich for better UX
 
   const handleGenerate = async (request: DocumentGenerationRequest) => {
     setGenerationState('loading');
@@ -54,26 +57,65 @@ const TeacherGenerationPage: React.FC = () => {
     setLastRequest(null);
   };
 
+  // Handler for rich material generation
+  const handleRichMaterialGenerated = (result: DocumentGenerationResult) => {
+    setGenerationResult(result);
+    setGenerationState(result.success ? 'success' : 'error');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Generate IGCSE Math Materials</h1>
-          <p className="text-lg text-gray-600 mt-2">
-            Create worksheets, notes, and assessments tailored to Cambridge IGCSE Mathematics curriculum
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Generate IGCSE Math Materials</h1>
+              <p className="text-lg text-gray-600 mt-2">
+                Create worksheets, notes, and assessments tailored to Cambridge IGCSE Mathematics curriculum
+              </p>
+            </div>
+            
+            {/* Generator Mode Toggle */}
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-gray-600">Basic</span>
+              <button
+                onClick={() => setUseRichGenerator(!useRichGenerator)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                  useRichGenerator ? 'bg-green-600' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    useRichGenerator ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className="text-sm font-medium text-gray-600 flex items-center">
+                <Sparkles className="w-4 h-4 mr-1" />
+                Rich
+              </span>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Generation Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <GenerationForm
-                onGenerate={handleGenerate}
-                generationState={generationState}
+            {useRichGenerator ? (
+              <RichMaterialGenerator
+                onMaterialGenerated={handleRichMaterialGenerated}
+                showValidation={true}
               />
-            </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Basic Generator</h3>
+                <GenerationForm
+                  onGenerate={handleGenerate}
+                  generationState={generationState}
+                />
+              </div>
+            )}
           </div>
 
           {/* Right Column - Preview & Download */}
@@ -132,8 +174,8 @@ const TeacherGenerationPage: React.FC = () => {
               </div>
             )}
 
-            {/* Download Manager */}
-            {generationResult?.success && (
+            {/* Download Manager - only show when NOT using rich generator */}
+            {generationResult?.success && !useRichGenerator && (
               <DownloadManager
                 documentId={generationResult.document?.document_id}
                 documentTitle={lastRequest?.title || 'Generated Material'}
@@ -186,8 +228,8 @@ const TeacherGenerationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Material Preview */}
-        {(generationResult || generationState === 'loading') && (
+        {/* Material Preview - only show when NOT using rich generator */}
+        {(generationResult || generationState === 'loading') && !useRichGenerator && (
           <div className="mt-8">
             <MaterialPreview result={generationResult} />
           </div>

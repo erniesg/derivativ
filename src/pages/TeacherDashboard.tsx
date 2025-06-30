@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Download, Users, BarChart3, Plus, Filter, ExternalLink } from 'lucide-react';
+import { FileText, Download, Users, BarChart3, Plus, Filter, ExternalLink, Sparkles } from 'lucide-react';
+import RichMaterialGenerator from '../components/igcse/RichMaterialGenerator';
+import { DocumentGenerationResult } from '../types/api';
 
 interface GeneratedMaterial {
   id: string;
@@ -20,12 +22,13 @@ interface GeneratedMaterial {
 
 const TeacherDashboard: React.FC = () => {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-  const [detailLevel, setDetailLevel] = useState(5);
+  const [detailLevel, setDetailLevel] = useState(5); // Default to medium level (5)
   const [targetLevel, setTargetLevel] = useState('IGCSE');
   const [materialType, setMaterialType] = useState('worksheet');
   const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedMaterial[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+  const [useRichGenerator, setUseRichGenerator] = useState(true);
 
   const topics = [
     'Algebra', 'Geometry', 'Trigonometry', 'Statistics', 
@@ -65,6 +68,32 @@ const TeacherDashboard: React.FC = () => {
     setIsLoadingDocuments(false);
   };
 
+  // Handler for rich material generation
+  const handleRichMaterialGenerated = (result: DocumentGenerationResult) => {
+    if (result.success && result.document) {
+      const newDocument: GeneratedMaterial = {
+        id: result.document.document_id,
+        document_id: result.document.document_id,
+        title: result.document.title || result.document.enhanced_title || 'Generated Material',
+        type: result.document.document_type as 'worksheet' | 'notes' | 'assessment',
+        topics: [result.document.document_type.replace('_', ' ')],
+        difficulty: result.document.detail_level === 'minimal' ? 'Easy' : 
+                   result.document.detail_level === 'comprehensive' ? 'Hard' : 'Medium',
+        createdAt: new Date(),
+        downloads: 0,
+        available_formats: ['html'],
+        r2_files: []
+      };
+
+      setGeneratedDocuments(prev => [newDocument, ...prev]);
+      
+      // Show success notification
+      alert(`✅ ${newDocument.title} generated successfully!\n` +
+            `Processing time: ${result.processing_time?.toFixed(2)}s\n` +
+            `Document is now available in your materials list.`);
+    }
+  };
+
   const handleDownload = async (documentId: string, format: string = 'html', version: string = 'student') => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}/download?format=${format}&version=${version}`);
@@ -102,16 +131,16 @@ const TeacherDashboard: React.FC = () => {
       // Map frontend values to backend API format
       const requestData = {
         document_type: materialType === 'assessment' ? 'worksheet' : materialType as 'worksheet' | 'notes',
-        detail_level: detailLevel <= 3 ? 'minimal' : detailLevel <= 7 ? 'medium' : 'comprehensive' as 'minimal' | 'medium' | 'comprehensive',
+        detail_level: detailLevel, // Now using integer values directly
         title: `${selectedTopics.join(' & ')} ${materialType.charAt(0).toUpperCase() + materialType.slice(1)}`,
         topic: selectedTopics.join(', ').toLowerCase().replace(/\s+/g, '_'),
         tier: 'Core' as const,
         grade_level: targetLevel === 'IGCSE' ? 7 : targetLevel === 'A-Level' ? 12 : 10,
         auto_include_questions: true,
         max_questions: materialType === 'notes' ? 3 : 5,
-        custom_instructions: `Generate content suitable for ${targetLevel} level students with detail level ${detailLevel}/10`,
+        custom_instructions: `Generate content suitable for ${targetLevel} level students with detail level ${detailLevel}`,
         include_answers: true,
-        include_working: detailLevel > 5
+        include_working: detailLevel >= 9 // Comprehensive (9) or Guided (10) levels
       };
 
       console.log('Generating document:', requestData);
@@ -162,7 +191,7 @@ const TeacherDashboard: React.FC = () => {
           title: result.document.title,
           type: materialType as 'worksheet' | 'notes' | 'assessment',
           topics: selectedTopics,
-          difficulty: detailLevel <= 3 ? 'Easy' : detailLevel <= 7 ? 'Medium' : 'Hard',
+          difficulty: detailLevel <= 3 ? 'Easy' : detailLevel >= 9 ? 'Hard' : 'Medium',
           createdAt: new Date(),
           downloads: 0,
           available_formats: ['html'],
@@ -260,8 +289,42 @@ const TeacherDashboard: React.FC = () => {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Material Generator */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Generate New Material</h2>
+          <div className="lg:col-span-2">
+            {/* Generator Mode Toggle */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Generate New Material</h2>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-600">Basic</span>
+                  <button
+                    onClick={() => setUseRichGenerator(!useRichGenerator)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                      useRichGenerator ? 'bg-green-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        useRichGenerator ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm text-gray-600 flex items-center">
+                    <Sparkles className="w-4 h-4 mr-1" />
+                    Rich
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Conditional Generator */}
+            {useRichGenerator ? (
+              <RichMaterialGenerator
+                onMaterialGenerated={handleRichMaterialGenerated}
+                showValidation={true}
+              />
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Basic Generator</h3>
             
             <div className="space-y-6">
               {/* Material Type */}
@@ -363,6 +426,8 @@ const TeacherDashboard: React.FC = () => {
                 )}
               </button>
             </div>
+          </div>
+            )}
           </div>
 
           {/* Recent Materials */}

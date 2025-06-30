@@ -38,12 +38,21 @@ export class AuthService {
     try {
       const { data: { user }, error } = await supabase.auth.getUser()
       
-      if (error) throw error
+      if (error) {
+        // Don't log auth errors for teacher pages - they're expected when not authenticated
+        if (window.location.pathname.includes('/teacher')) {
+          return null
+        }
+        throw error
+      }
       if (!user) return null
 
       return this.transformSupabaseUser(user)
     } catch (error) {
-      console.error('Error getting current user:', error)
+      // Only log errors if not on teacher pages
+      if (!window.location.pathname.includes('/teacher')) {
+        console.error('Error getting current user:', error)
+      }
       return null
     }
   }
