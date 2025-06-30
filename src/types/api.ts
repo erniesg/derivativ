@@ -72,7 +72,7 @@ export interface DocumentGenerationRequest {
   title: string;
   topic: string;
   tier?: Tier;
-  grade_level?: number;
+  grade_level?: string; // Changed from number to string to match backend expectation
   subject_content_refs?: string[];
   question_references?: any[];
   auto_include_questions?: boolean;
@@ -89,15 +89,31 @@ export interface DocumentGenerationRequest {
 
 export interface DocumentGenerationResult {
   success: boolean;
-  document?: any;
+  document_id?: string;
+  markdown_content?: string;
+  downloads?: {
+    markdown?: DownloadInfo;
+    html?: DownloadInfo;
+    pdf?: DownloadInfo;
+    docx?: DownloadInfo;
+  };
+  metadata?: Record<string, any>;
+  generation_time?: string;
+  document?: any; // Keep for backward compatibility
   error_message?: string;
-  processing_time: number;
+  processing_time?: number; // Keep for backward compatibility
   questions_processed?: number;
   sections_generated?: number;
   customizations_applied?: number;
   personalization_success?: boolean;
   agent_results?: Record<string, any>[];
   reasoning_steps?: Record<string, any>[];
+}
+
+export interface DownloadInfo {
+  available: boolean;
+  download_url?: string;
+  file_size?: number;
 }
 
 export interface ContentSection {

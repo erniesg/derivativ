@@ -70,26 +70,37 @@ const TeacherDashboard: React.FC = () => {
 
   // Handler for rich material generation
   const handleRichMaterialGenerated = (result: DocumentGenerationResult) => {
-    if (result.success && result.document) {
+    if (result.success) {
+      // Get available formats from the new API response
+      const availableFormats = result.downloads 
+        ? Object.keys(result.downloads).filter(format => result.downloads?.[format as keyof typeof result.downloads]?.available)
+        : ['markdown'];
+
       const newDocument: GeneratedMaterial = {
-        id: result.document.document_id,
-        document_id: result.document.document_id,
-        title: result.document.title || result.document.enhanced_title || 'Generated Material',
-        type: result.document.document_type as 'worksheet' | 'notes' | 'assessment',
-        topics: [result.document.document_type.replace('_', ' ')],
-        difficulty: result.document.detail_level === 'minimal' ? 'Easy' : 
-                   result.document.detail_level === 'comprehensive' ? 'Hard' : 'Medium',
+        id: result.document_id || result.document?.document_id || `doc_${Date.now()}`,
+        document_id: result.document_id || result.document?.document_id || `doc_${Date.now()}`,
+        title: result.metadata?.title || result.document?.title || result.document?.enhanced_title || 'Generated Material',
+        type: (result.metadata?.document_type || result.document?.document_type || 'worksheet') as 'worksheet' | 'notes' | 'assessment',
+        topics: [result.metadata?.topic || result.document?.document_type?.replace('_', ' ') || 'General'],
+        difficulty: result.metadata?.detail_level === 1 ? 'Easy' : 
+                   result.metadata?.detail_level >= 9 ? 'Hard' : 'Medium',
         createdAt: new Date(),
         downloads: 0,
-        available_formats: ['html'],
+        available_formats: availableFormats,
         r2_files: []
       };
 
       setGeneratedDocuments(prev => [newDocument, ...prev]);
       
+      // Parse generation time (handle both string and number formats)
+      const generationTime = result.generation_time 
+        ? (typeof result.generation_time === 'string' ? parseFloat(result.generation_time) : result.generation_time)
+        : (result.processing_time || 0);
+      
       // Show success notification
       alert(`✅ ${newDocument.title} generated successfully!\n` +
-            `Processing time: ${result.processing_time?.toFixed(2)}s\n` +
+            `Processing time: ${generationTime.toFixed(2)}s\n` +
+            `Available formats: ${availableFormats.join(', ')}\n` +
             `Document is now available in your materials list.`);
     }
   };
@@ -145,8 +156,8 @@ const TeacherDashboard: React.FC = () => {
 
       console.log('Generating document:', requestData);
 
-      // Call the correct document generation API endpoint
-      const response = await fetch(`${API_BASE_URL}/api/generation/documents/generate`, {
+      // Call the new markdown generation API endpoint
+      const response = await fetch(`${API_BASE_URL}/api/generation/documents/generate-markdown`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,46 +174,36 @@ const TeacherDashboard: React.FC = () => {
       console.log('Document generated successfully:', result);
 
       if (result.success) {
-        // Export to HTML format for quick viewing
-        const exportRequest = {
-          document_id: result.document.document_id,
-          format: 'html',
-          version: 'student'
-        };
-
-        console.log('Exporting document to R2:', exportRequest);
-        const exportResponse = await fetch(`${API_BASE_URL}/api/generation/documents/export`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(exportRequest),
-        });
-
-        if (exportResponse.ok) {
-          const exportResult = await exportResponse.json();
-          console.log('Document exported to R2:', exportResult);
-        }
+        // Get available formats from the new API response
+        const availableFormats = Object.keys(result.downloads || {}).filter(
+          format => result.downloads?.[format as keyof typeof result.downloads]?.available
+        );
 
         // Add to generated documents
         const newDocument: GeneratedMaterial = {
-          id: result.document.document_id,
-          document_id: result.document.document_id,
-          title: result.document.title,
+          id: result.document_id || result.document?.document_id || `doc_${Date.now()}`,
+          document_id: result.document_id || result.document?.document_id || `doc_${Date.now()}`,
+          title: result.metadata?.title || result.document?.title || `${selectedTopics.join(' & ')} ${materialType}`,
           type: materialType as 'worksheet' | 'notes' | 'assessment',
           topics: selectedTopics,
           difficulty: detailLevel <= 3 ? 'Easy' : detailLevel >= 9 ? 'Hard' : 'Medium',
           createdAt: new Date(),
           downloads: 0,
-          available_formats: ['html'],
+          available_formats: availableFormats.length > 0 ? availableFormats : ['markdown'],
           r2_files: []
         };
 
         setGeneratedDocuments(prev => [newDocument, ...prev]);
 
-        alert(`✅ ${result.document.title} generated and exported successfully!\n` +
-              `Processing time: ${result.processing_time.toFixed(2)}s\n` +
-              `Document is now available for download.`);
+        // Parse generation time (handle both string and number formats)
+        const generationTime = result.generation_time 
+          ? (typeof result.generation_time === 'string' ? parseFloat(result.generation_time) : result.generation_time)
+          : (result.processing_time || 0);
+
+        alert(`✅ ${newDocument.title} generated successfully!\n` +
+              `Processing time: ${generationTime.toFixed(2)}s\n` +
+              `Available formats: ${availableFormats.join(', ') || 'markdown'}\n` +
+              `Document is now ready for download.`);
       } else {
         throw new Error(result.error_message || 'Document generation failed');
       }

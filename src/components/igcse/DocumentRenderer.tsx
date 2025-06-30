@@ -108,18 +108,28 @@ const DocumentHeader: React.FC<{ document: any; renderMode: string }> = ({ docum
  */
 const DocumentContent: React.FC<{ document: any; renderMode: string }> = ({ document, renderMode }) => {
   // Handle different document formats with validation
-  if (document.content_html) {
-    return <HTMLContentRenderer content={document.content_html} renderMode={renderMode} />;
+  
+  // Priority 1: Check for markdown content from new API
+  if (document.markdown_content) {
+    return <MarkdownContentRenderer content={document.markdown_content} renderMode={renderMode} />;
   }
 
+  // Priority 2: Check for legacy content_markdown
   if (document.content_markdown) {
     return <MarkdownContentRenderer content={document.content_markdown} renderMode={renderMode} />;
   }
 
+  // Priority 3: Check for HTML content
+  if (document.content_html) {
+    return <HTMLContentRenderer content={document.content_html} renderMode={renderMode} />;
+  }
+
+  // Priority 4: Check for structured sections
   if (document.sections) {
     return <SectionsRenderer sections={document.sections} renderMode={renderMode} />;
   }
 
+  // Priority 5: Check for blocks format
   if (document.blocks) {
     return <BlocksRenderer blocks={document.blocks} renderMode={renderMode} />;
   }
@@ -161,14 +171,30 @@ const HTMLContentRenderer: React.FC<{ content: string; renderMode: string }> = (
 };
 
 /**
- * Markdown content renderer
+ * Enhanced markdown content renderer
  */
 const MarkdownContentRenderer: React.FC<{ content: string; renderMode: string }> = ({ content, renderMode }) => {
+  if (!content || typeof content !== 'string') {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <p className="text-yellow-800">⚠️ No markdown content available</p>
+      </div>
+    );
+  }
+
   return (
-    <div className={`prose max-w-none ${renderMode === 'compact' ? 'prose-sm' : ''}`}>
-      <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed">
-        {content}
-      </pre>
+    <div className={`prose max-w-none ${renderMode === 'compact' ? 'prose-sm' : 'prose-lg'}`}>
+      <div className="markdown-content">
+        <pre className="whitespace-pre-wrap font-sans text-gray-800 leading-relaxed bg-gray-50 p-4 rounded-lg border">
+          {content}
+        </pre>
+        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+          <span className="font-medium text-blue-800">💡 Tip:</span>
+          <span className="text-blue-700 ml-2">
+            This content is in Markdown format. Use the download options to get formatted HTML, PDF, or DOCX versions.
+          </span>
+        </div>
+      </div>
     </div>
   );
 };

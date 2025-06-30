@@ -76,10 +76,13 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
           onMaterialGenerated(response.data);
         }
         
-        // Auto-trigger export after successful generation
-        if (response.data.document?.document_id) {
+        // Check if downloads are already available from the new API
+        if (response.data.downloads && Object.values(response.data.downloads).some(download => download?.available)) {
+          addProgress('Downloads Ready', 'Multiple formats available for download');
+        } else if (response.data.document_id || response.data.document?.document_id) {
+          // Fallback to old export method if needed
           addProgress('Exporting', 'Preparing document for download...');
-          await triggerExport(response.data.document.document_id);
+          await triggerExport(response.data.document_id || response.data.document.document_id);
         }
         
       } else {
@@ -190,7 +193,13 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
                 <div className="flex items-center space-x-4">
                   {/* Generation Metrics */}
                   <div className="text-sm text-gray-500">
-                    Generated in {generationResult.processing_time?.toFixed(1)}s
+                    Generated in {
+                      generationResult.generation_time 
+                        ? (typeof generationResult.generation_time === 'string' 
+                           ? parseFloat(generationResult.generation_time) 
+                           : generationResult.generation_time).toFixed(1)
+                        : generationResult.processing_time?.toFixed(1) || '0'
+                    }s
                   </div>
                   
                   {/* Action Buttons */}
@@ -214,18 +223,30 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
 
             {/* Rich Document Content */}
             <DocumentRenderer
-              document={generationResult.document}
+              document={{
+                ...generationResult.document,
+                markdown_content: generationResult.markdown_content,
+                document_id: generationResult.document_id || generationResult.document?.document_id,
+                title: generationResult.metadata?.title || generationResult.document?.title,
+                document_type: generationResult.metadata?.document_type || generationResult.document?.document_type,
+                ...generationResult.metadata
+              }}
               renderMode="full"
               showMetadata={true}
             />
           </div>
 
           {/* Download Manager */}
-          {generationResult.document && (
+          {(generationResult.document_id || generationResult.document) && (
             <DownloadManager
-              documentId={generationResult.document.document_id}
-              generatedContent={generationResult.document}
-              documentTitle={generationResult.document.title || 'Generated Material'}
+              documentId={generationResult.document_id || generationResult.document?.document_id || 'unknown'}
+              generatedContent={{
+                ...generationResult.document,
+                markdown_content: generationResult.markdown_content,
+                downloads: generationResult.downloads,
+                ...generationResult.metadata
+              }}
+              documentTitle={generationResult.metadata?.title || generationResult.document?.title || 'Generated Material'}
               className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
             />
           )}

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { AuthGuard } from '../components/auth/AuthGuard';
 import { AuthService } from '../services/auth';
-import LaTeXRenderer from '../components/LaTeXRenderer';
 import { Clock, CheckCircle, XCircle, ArrowRight, Loader2 } from 'lucide-react';
 
 interface QuizOption {
@@ -538,7 +537,7 @@ const Assessment: React.FC = () => {
                               </span>
                             </div>
                             <div className="text-sm text-gray-800 mb-2">
-                              <LaTeXRenderer text={questions[index]?.question || ''} />
+                              {questions[index]?.question || ''}
                             </div>
                             <div className="text-xs space-y-1">
                               <p>
@@ -701,7 +700,7 @@ const Assessment: React.FC = () => {
                 <span className="text-sm text-gray-500">{currentQ.topic}</span>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                <LaTeXRenderer text={currentQ.question} />
+                {currentQ.question}
               </h2>
             </div>
 
@@ -745,7 +744,7 @@ const Assessment: React.FC = () => {
                       <span className="font-medium mr-3">
                         {String.fromCharCode(65 + index)}.
                       </span>
-                      <LaTeXRenderer text={option} />
+                      {option}
                       {currentFeedback && (
                         <div className="ml-auto">
                           {index === ['A', 'B', 'C', 'D'].indexOf(currentFeedback.correctAnswer) && (

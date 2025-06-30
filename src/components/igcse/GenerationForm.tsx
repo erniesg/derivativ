@@ -105,7 +105,7 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
       title: formState.title,
       topic: formState.selectedTopics.join(', '),
       tier: formState.selectedTier,
-      grade_level: formState.selectedTier === Tier.CORE ? 7 : 9, // Map to grade levels
+      grade_level: formState.selectedTier === Tier.CORE ? "7-9" : "9-10", // Convert to string format expected by backend
       auto_include_questions: true,
       max_questions: formState.maxQuestions,
       include_answers: formState.includeAnswers,

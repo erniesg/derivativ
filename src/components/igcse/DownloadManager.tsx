@@ -78,6 +78,32 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
     updateDownloadState(format, 'loading');
 
     try {
+      // First, check if downloads are already available from the new API response
+      if (generatedContent?.downloads && generatedContent.downloads[format as keyof typeof generatedContent.downloads]) {
+        const downloadInfo = generatedContent.downloads[format as keyof typeof generatedContent.downloads];
+        if (downloadInfo?.available && downloadInfo.download_url) {
+          console.log(`Using pre-generated download URL for ${format}:`, downloadInfo.download_url);
+          triggerDownload(downloadInfo.download_url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+          updateDownloadState(format, 'success');
+          setTimeout(() => updateDownloadState(format, 'idle'), 3000);
+          return;
+        }
+      }
+
+      // If we have a markdown_content from the new API, prioritize that for client-side generation
+      if (generatedContent?.markdown_content && format === 'markdown') {
+        const blob = new Blob([generatedContent.markdown_content], { 
+          type: EXPORT_FORMATS.find(f => f.value === 'markdown')?.mimeType 
+        });
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, `${documentTitle}.md`);
+        URL.revokeObjectURL(url);
+        updateDownloadState(format, 'success');
+        setTimeout(() => updateDownloadState(format, 'idle'), 3000);
+        return;
+      }
+
+      // Fallback to API export or client-side generation
       if (documentId) {
         // Use API to export document
         const response = await apiService.exportDocument(documentId, format);
@@ -496,6 +522,11 @@ ${400 + pdfContent.length}
   const generateMarkdown = (content: any): string => {
     const title = documentTitle || content.title || 'Generated Material';
     let markdown = `# ${title}\n\n`;
+
+    // Check if we already have markdown content from the new API
+    if (content.markdown_content) {
+      return content.markdown_content;
+    }
 
     if (typeof content === 'string') {
       markdown += content;

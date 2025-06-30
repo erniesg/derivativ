@@ -111,8 +111,8 @@ class ApiService {
       detail_level: this.mapDetailLevelToBackend(request.detail_level as any)
     };
     
-    console.log('🚀 Frontend sending request:', JSON.stringify(backendRequest, null, 2));
-    return this.request<DocumentGenerationResult>('/api/generation/documents/generate', {
+    console.log('🚀 Frontend sending request to generate-markdown:', JSON.stringify(backendRequest, null, 2));
+    return this.request<DocumentGenerationResult>('/api/generation/documents/generate-markdown', {
       method: 'POST',
       body: JSON.stringify(backendRequest)
     });

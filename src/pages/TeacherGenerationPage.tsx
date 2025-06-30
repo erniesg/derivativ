@@ -146,7 +146,10 @@ const TeacherGenerationPage: React.FC = () => {
                   <div>
                     <h3 className="font-semibold text-green-900">Generation Complete!</h3>
                     <p className="text-green-700 text-sm">
-                      Generated in {generationResult.processing_time.toFixed(1)}s
+                      Generated in {generationResult.processing_time ? 
+                        generationResult.processing_time.toFixed(1) : 
+                        (generationResult.generation_time || 'N/A')
+                      }s
                     </p>
                   </div>
                 </div>
@@ -206,7 +209,12 @@ const TeacherGenerationPage: React.FC = () => {
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Processing Time:</span>
-                        <span className="font-medium">{generationResult.processing_time.toFixed(1)}s</span>
+                        <span className="font-medium">
+                          {generationResult.processing_time ? 
+                            generationResult.processing_time.toFixed(1) : 
+                            (generationResult.generation_time || 'N/A')
+                          }s
+                        </span>
                       </div>
                       {generationResult.questions_processed && (
                         <div className="flex justify-between text-sm">
