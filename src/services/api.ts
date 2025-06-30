@@ -170,11 +170,15 @@ class ApiService {
   }
 
   async getDocument(documentId: string): Promise<ApiResponse<any>> {
-    return this.request<any>(`/api/documents/${documentId}`);
+    console.log('🚀 Getting document via AI API:', { documentId });
+    
+    return this.aiRequest<any>(`/api/generation/documents/${documentId}`);
   }
 
   async exportDocument(documentId: string, format: string): Promise<ApiResponse<any>> {
-    return this.request<any>('/api/generation/documents/export', {
+    console.log('🚀 Exporting document via AI API:', { documentId, format });
+    
+    return this.aiRequest<any>('/api/generation/documents/export', {
       method: 'POST',
       body: JSON.stringify({
         document_id: documentId,
@@ -184,7 +188,9 @@ class ApiService {
   }
 
   async getTemplates(): Promise<ApiResponse<any[]>> {
-    return this.request<any[]>('/api/documents/templates');
+    console.log('🚀 Getting templates via AI API');
+    
+    return this.aiRequest<any[]>('/api/generation/documents/templates');
   }
 
   async generateQuestions(request: any): Promise<ApiResponse<any>> {
