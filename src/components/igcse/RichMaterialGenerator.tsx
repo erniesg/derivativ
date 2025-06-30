@@ -112,15 +112,10 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
     }]);
   };
 
-  // Auto-export generated document
+  // Auto-export disabled - using new generate-markdown endpoint with pre-generated downloads
   const triggerExport = async (documentId: string) => {
-    try {
-      await apiService.exportDocument(documentId, 'html');
-      addProgress('Export Complete', 'Document ready for download');
-    } catch (err) {
-      console.warn('Auto-export failed:', err);
-      // Don't treat export failure as generation failure
-    }
+    console.log('Auto-export disabled - downloads are already available from generate-markdown endpoint');
+    addProgress('Downloads Ready', 'All formats available from generation');
   };
 
   // Validation result handler

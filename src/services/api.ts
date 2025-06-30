@@ -176,7 +176,11 @@ class ApiService {
   }
 
   async exportDocument(documentId: string, format: string): Promise<ApiResponse<any>> {
-    console.log('🚀 Exporting document via AI API:', { documentId, format });
+    console.error('🚨 OLD API METHOD CALLED: exportDocument()');
+    console.error('📋 Document ID:', documentId);
+    console.error('📋 Format:', format);
+    console.error('🔍 Call stack:', new Error().stack);
+    console.error('⚠️  This will return MOCK DATA - use generate-markdown endpoint instead!');
     
     return this.aiRequest<any>('/api/generation/documents/export', {
       method: 'POST',
