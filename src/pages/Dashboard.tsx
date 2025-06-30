@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { AuthGuard } from '../components/auth/AuthGuard';
 import { AuthService } from '../services/auth';
 import { Link } from 'react-router-dom';
-import { Target, TrendingUp, Clock, Award, ChevronRight } from 'lucide-react';
+import { Target, Award, ChevronRight } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user, setUser } = useUser();
@@ -27,30 +27,21 @@ const Dashboard: React.FC = () => {
 
     try {
       // Load user profile from your backend API
-      const { user: profileUser, assessmentData: profileAssessmentData } = await AuthService.loadUserProfile();
+      const { user, assessmentData } = await AuthService.loadUserProfile();
 
-      let finalUserData = profileUser;
-      let finalAssessmentData = profileAssessmentData;
-
-      // If no profile exists in your backend, create default data
-      if (!profileUser) {
-        console.log('No profile found, creating default data');
-        const defaultData = AuthService.createDefaultUserData(authUser);
-        finalUserData = defaultData.user;
-        finalAssessmentData = defaultData.assessmentData;
-      }
+      let finalUserData = user;
+      let finalAssessmentData = assessmentData;
 
       // Set the user and assessment data
       setUser(finalUserData);
       setAssessmentData(finalAssessmentData);
-
     } catch (error) {
       console.error('Error loading user profile:', error);
 
       // Fallback to default data if API fails
-      const defaultData = AuthService.createDefaultUserData(authUser);
-      setUser(defaultData.user);
-      setAssessmentData(defaultData.assessmentData);
+      // const defaultData = AuthService.createDefaultUserData(authUser);
+      // setUser(defaultData.user);
+      // setAssessmentData(defaultData.assessmentData);
     } finally {
       setProfileLoading(false);
     }
@@ -72,10 +63,11 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const topicScores = assessmentData.topicScores;
-  const averageScore = topicScores.reduce((sum, topic) => sum + topic.score, 0) / topicScores.length;
-  const weakestTopics = topicScores.filter(topic => topic.score < 6).sort((a, b) => a.score - b.score);
-  const strongestTopics = topicScores.filter(topic => topic.score >= 7).sort((a, b) => b.score - a.score);
+  console.log('assessmentData: ', assessmentData);
+
+  const topicsPerformance = assessmentData.topicsPerformance;
+
+  const hasQuizData = assessmentData.totalQuizzes > 0;
 
   return (
     <AuthGuard
@@ -87,20 +79,28 @@ const Dashboard: React.FC = () => {
           {/* Header */}
           <div className="mb-6 lg:mb-8 text-center lg:text-left">
             <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-              Welcome back, {user.name}!
+              {hasQuizData ? `Welcome back, ${user.name}!` : `Welcome, ${user.name}!`}
             </h1>
             <p className="text-gray-600 text-sm lg:text-base">
-              Ready to ace your {user.examSession} exam? Let's continue your journey.
+              {hasQuizData
+                ? `Ready to ace your exam? Let's continue your journey.`
+                : `Ready to start your exam preparation? Take your first assessment to get personalized recommendations.`
+              }
             </p>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6 mb-6 lg:mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-6 mb-6 lg:mb-8">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs lg:text-sm text-gray-600 mb-1">Overall Score</p>
-                  <p className="text-lg lg:text-2xl font-bold text-gray-900">{averageScore.toFixed(1)}/10</p>
+                  <p className="text-xs lg:text-sm text-gray-600 mb-1">Average Score</p>
+                  <p className="text-lg lg:text-2xl font-bold text-gray-900">
+                    {hasQuizData ? `${assessmentData.averageScore.toFixed(1)}/100` : '--'}
+                  </p>
+                  {!hasQuizData && (
+                    <p className="text-xs text-gray-500">Take a quiz to see your score</p>
+                  )}
                 </div>
                 <div className="w-8 h-8 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Award className="w-4 h-4 lg:w-6 lg:h-6 text-blue-600" />
@@ -112,7 +112,12 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs lg:text-sm text-gray-600 mb-1">Topics Mastered</p>
-                  <p className="text-lg lg:text-2xl font-bold text-gray-900">{strongestTopics.length}/{topicScores.length}</p>
+                  <p className="text-lg lg:text-2xl font-bold text-gray-900">
+                    {hasQuizData ? `${assessmentData.strongestTopics.length}/${assessmentData.topicsPerformance.length}` : '0/10'}
+                  </p>
+                  {!hasQuizData && (
+                    <p className="text-xs text-gray-500">Start practicing to master topics</p>
+                  )}
                 </div>
                 <div className="w-8 h-8 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <Target className="w-4 h-4 lg:w-6 lg:h-6 text-green-600" />
@@ -120,7 +125,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
+            {/* <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs lg:text-sm text-gray-600 mb-1">Study Streak</p>
@@ -130,7 +135,7 @@ const Dashboard: React.FC = () => {
                   <TrendingUp className="w-4 h-4 lg:w-6 lg:h-6 text-orange-600" />
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
               <div className="flex items-center justify-between">
@@ -150,33 +155,54 @@ const Dashboard: React.FC = () => {
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4 lg:p-6">
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4 lg:mb-6">Topic Performance</h2>
 
-              <div className="space-y-4">
-                {topicScores.map((topic) => (
-                  <div key={topic.topic} className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-gray-900">{topic.topic}</h3>
-                        <span className={`text-sm font-semibold ${topic.score >= 7 ? 'text-green-600' :
-                          topic.score >= 5 ? 'text-yellow-600' : 'text-red-600'
-                          }`}>
-                          {topic.score}/10
-                        </span>
+              {hasQuizData ? (
+                <div className="space-y-4">
+                  {topicsPerformance.map((topic) => (
+                    <div key={topic.topicName} className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium text-gray-900">{topic.topicName}</h3>
+                          <span className={`text-sm font-semibold ${topic.wmaGrade === 0 ? 'text-gray-400' :
+                            topic.wmaGrade >= 7 ? 'text-green-600' :
+                              topic.wmaGrade >= 5 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                            {topic.wmaGrade === 0 ? '--' : `${topic.wmaGrade}/9`}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${topic.wmaGrade === 0 ? 'bg-gray-300' :
+                              topic.wmaGrade >= 7 ? 'bg-green-500' :
+                                topic.wmaGrade >= 5 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`}
+                            style={{ width: `${topic.wmaGrade === 0 ? 0 : (topic.wmaGrade / 9) * 100}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {topic.totalAttempts === 0 ? 'No attempts yet' : `${topic.totalAttempts} attempts`}
+                        </p>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${topic.score >= 7 ? 'bg-green-500' :
-                            topic.score >= 5 ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}
-                          style={{ width: `${(topic.score / 10) * 100}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {topic.attempts} attempts
-                      </p>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Target className="w-8 h-8 text-blue-600" />
                   </div>
-                ))}
-              </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready to start learning?</h3>
+                  <p className="text-gray-600 mb-6">
+                    Take your first assessment to see how you perform across all the math topics.
+                  </p>
+                  <Link
+                    to="/assessment"
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-flex items-center"
+                  >
+                    <Target className="w-4 h-4 mr-2" />
+                    Take First Assessment
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Quick Actions */}
@@ -210,7 +236,7 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Learning */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              {/* <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Interactive Learning</h3>
                 <p className="text-gray-600 text-sm mb-4">
                   Review notes and primers for your focus areas
@@ -221,16 +247,16 @@ const Dashboard: React.FC = () => {
                 >
                   Start Learning <ChevronRight size={16} className="ml-1" />
                 </Link>
-              </div>
+              </div> */}
 
               {/* Focus Areas */}
-              {weakestTopics.length > 0 && (
+              {assessmentData.weakestTopics.length > 0 && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-red-900 mb-2">Focus Areas</h3>
                   <div className="space-y-2">
-                    {weakestTopics.slice(0, 3).map(topic => (
-                      <div key={topic.topic} className="text-sm text-red-700">
-                        {topic.topic}: {topic.score}/10
+                    {assessmentData.weakestTopics.slice(0, 3).map(topic => (
+                      <div key={topic.topics.topicName} className="text-sm text-red-700">
+                        {topic.topics.topicName}
                       </div>
                     ))}
                   </div>

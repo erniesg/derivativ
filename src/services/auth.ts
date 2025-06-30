@@ -67,78 +67,76 @@ export class AuthService {
         return { user: null, assessmentData: null }
       }
 
-      // TODO: Replace with real API calls when ready
-      // For now, return mock data for iGCSE Math
-      console.log('Using mock data until API is ready...')
-      
       const basicUser = await this.getCurrentUser()
       if (!basicUser) return { user: null, assessmentData: null }
-      
-      // Mock user profile data for iGCSE Math
-      const mockUserProfile = {
-        ...basicUser,
-        examSession: 'May/June 2025',
-        school: 'International Academy',
-        subjects: ['Mathematics', 'Additional Mathematics'],
-        targetGrade: 'A*',
-        studyHoursPerWeek: 12
-      }
 
-      // Mock assessment data with realistic iGCSE Math performance
-      const mockAssessmentData = {
-        userId: basicUser.id,
-        topicScores: [
-          { topic: "Number", score: 8.2, attempts: 15, recentPerformance: [7.5, 8.0, 8.5, 8.2], difficulty: 'easy' as const },
-          { topic: "Algebra", score: 6.8, attempts: 12, recentPerformance: [6.0, 6.5, 7.0, 6.8], difficulty: 'medium' as const },
-          { topic: "Geometry", score: 7.5, attempts: 10, recentPerformance: [7.0, 7.2, 7.8, 7.5], difficulty: 'medium' as const },
-          { topic: "Coordinate Geometry", score: 5.4, attempts: 8, recentPerformance: [4.8, 5.0, 5.8, 5.4], difficulty: 'hard' as const },
-          { topic: "Trigonometry", score: 4.9, attempts: 6, recentPerformance: [4.5, 4.8, 5.2, 4.9], difficulty: 'hard' as const },
-          { topic: "Statistics", score: 7.8, attempts: 11, recentPerformance: [7.2, 7.5, 8.0, 7.8], difficulty: 'medium' as const },
-          { topic: "Probability", score: 6.2, attempts: 9, recentPerformance: [5.8, 6.0, 6.5, 6.2], difficulty: 'medium' as const },
-          { topic: "Functions", score: 5.8, attempts: 7, recentPerformance: [5.2, 5.5, 6.0, 5.8], difficulty: 'hard' as const },
-          { topic: "Sequences and Series", score: 6.5, attempts: 8, recentPerformance: [6.0, 6.2, 6.8, 6.5], difficulty: 'medium' as const },
-          { topic: "Mensuration", score: 7.2, attempts: 10, recentPerformance: [6.8, 7.0, 7.5, 7.2], difficulty: 'medium' as const },
-          { topic: "Graphs", score: 6.9, attempts: 9, recentPerformance: [6.5, 6.8, 7.2, 6.9], difficulty: 'medium' as const },
-          { topic: "Transformations", score: 5.6, attempts: 6, recentPerformance: [5.0, 5.2, 6.0, 5.6], difficulty: 'hard' as const }
-        ],
-        overallLevel: 6.7,
-        recommendedTopics: ['Trigonometry', 'Coordinate Geometry', 'Functions'],
-        lastAssessment: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        studyStreak: 7,
-        totalStudyTime: 85, // hours
-        examCountdown: 85, // days
-        strongestAreas: ['Number', 'Statistics', 'Geometry'],
-        weakestAreas: ['Trigonometry', 'Coordinate Geometry', 'Functions']
-      }
+      // Load analytics data from real API
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/quiz/analytics`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        })
 
-      return {
-        user: mockUserProfile,
-        assessmentData: mockAssessmentData
-      }
+        if (!response.ok) {
+          throw new Error(`Analytics API error: ${response.status}`)
+        }
 
-      /* TODO: Uncomment when APIs are ready
-      // Call your profile endpoint
-      const profileResponse = await apiService.getUserProfile(session.access_token)
-      
-      if (!profileResponse.success) {
-        console.warn('Failed to load user profile:', profileResponse.error)
-        // Fall back to basic Supabase user if profile API fails
-        const basicUser = await this.getCurrentUser()
-        return { user: basicUser, assessmentData: null }
-      }
+        const analyticsData = await response.json()
+        console.log('Analytics data received:', analyticsData)
 
-      // Call assessment data endpoint
-      const assessmentResponse = await apiService.getUserAssessmentData(session.access_token)
-      
-      return {
-        user: profileResponse.data,
-        assessmentData: assessmentResponse.success ? assessmentResponse.data : null
+        // Calculate overall metrics
+        // const validScores = transformedTopicScores.filter((t: any) => t.score > 0)
+        // const averageScore = validScores.length > 0 
+        //   ? validScores.reduce((sum: number, topic: any) => sum + topic.score, 0) / validScores.length
+        //   : analyticsData.data.averageScore || 0
+
+        // const strongestTopics = transformedTopicScores
+        //   .filter((topic: any) => topic.score >= 7)
+        //   .sort((a: any, b: any) => b.score - a.score)
+        //   .slice(0, 3)
+        //   .map((t: any) => t.topic)
+
+        // const weakestTopics = transformedTopicScores
+        //   .filter((topic: any) => topic.score > 0 && topic.score < 6)
+        //   .sort((a: any, b: any) => a.score - b.score)
+        //   .slice(0, 3)
+        //   .map((t: any) => t.topic)
+
+        // Enhanced user profile data
+
+
+        // Real assessment data from API
+
+
+        return {
+          user: basicUser,
+          assessmentData: analyticsData.data
+        }
+
+      } catch (apiError) {
+        console.warn('Failed to load analytics from API, falling back to default data:', apiError)
+        
+        // Fallback to default data if API fails
+        // const defaultData = this.createDefaultUserData(basicUser)
+        // return {
+        //   user: { ...basicUser, ...defaultData.user },
+        //   assessmentData: defaultData.assessmentData
+        // }
       }
-      */
     } catch (error) {
       console.error('Error loading user profile:', error)
       return { user: null, assessmentData: null }
     }
+  }
+
+  // Helper method to determine difficulty from score
+  static getDifficultyFromScore(score: number): 'easy' | 'medium' | 'hard' {
+    if (score >= 8) return 'easy'
+    if (score >= 6) return 'medium'
+    return 'hard'
   }
 
   // Create default data if profile doesn't exist yet
