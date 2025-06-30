@@ -27,27 +27,11 @@ const TeacherGenerationPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Generation Form */}
-          <div className="lg:col-span-2">
-            <RichMaterialGenerator
-              onMaterialGenerated={handleRichMaterialGenerated}
-              showValidation={true}
-            />
-          </div>
-
-          {/* Right Column - Info */}
-          <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Generation Tips</h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <p>• Select specific topics for focused content</p>
-                <p>• Choose appropriate difficulty level</p>
-                <p>• Include answers for teaching materials</p>
-                <p>• Generate multiple formats as needed</p>
-              </div>
-            </div>
-          </div>
+        <div className="w-full">
+          <RichMaterialGenerator
+            onMaterialGenerated={handleRichMaterialGenerated}
+            showValidation={true}
+          />
         </div>
 
       </div>

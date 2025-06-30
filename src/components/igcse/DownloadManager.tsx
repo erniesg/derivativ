@@ -83,7 +83,7 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
         const downloadInfo = generatedContent.downloads[format as keyof typeof generatedContent.downloads];
         if (downloadInfo?.available && downloadInfo.download_url) {
           console.log(`Using pre-generated download URL for ${format}:`, downloadInfo.download_url);
-          triggerDownload(downloadInfo.download_url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+          await triggerDownload(downloadInfo.download_url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
           updateDownloadState(format, 'success');
           setTimeout(() => updateDownloadState(format, 'idle'), 3000);
           return;
@@ -96,7 +96,7 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
           type: EXPORT_FORMATS.find(f => f.value === 'markdown')?.mimeType 
         });
         const url = URL.createObjectURL(blob);
-        triggerDownload(url, `${documentTitle}.md`);
+        await triggerDownload(url, `${documentTitle}.md`);
         URL.revokeObjectURL(url);
         updateDownloadState(format, 'success');
         setTimeout(() => updateDownloadState(format, 'idle'), 3000);
@@ -119,7 +119,7 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
                 type: EXPORT_FORMATS.find(f => f.value === format)?.mimeType 
               });
               const url = URL.createObjectURL(blob);
-              triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+              await triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
               URL.revokeObjectURL(url);
             } else if (response.data.r2_file_key && response.data.download_url) {
               // R2 file download via presigned URL
@@ -137,7 +137,7 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
               if (generatedContent) {
                 const blob = await createBlob(generatedContent, format);
                 const url = URL.createObjectURL(blob);
-                triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+                await triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
                 URL.revokeObjectURL(url);
               } else {
                 throw new Error('No content available for download');
@@ -581,13 +581,40 @@ ${400 + pdfContent.length}
     return markdown;
   };
 
-  const triggerDownload = (url: string, filename: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const triggerDownload = async (url: string, filename: string) => {
+    try {
+      // For URLs that are from Cloudflare R2, fetch the content and create a blob
+      if (url.includes('r2.cloudflarestorage.com') || url.includes('cloudflare')) {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the object URL
+        URL.revokeObjectURL(objectUrl);
+      } else {
+        // For blob URLs or other local URLs, use direct download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback to opening in new tab if direct download fails
+      window.open(url, '_blank');
+    }
   };
 
   const hasContent = Boolean(documentId || generatedContent);

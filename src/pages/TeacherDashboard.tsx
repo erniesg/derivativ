@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, Users, BarChart3, Plus, Filter, ExternalLink, Sparkles } from 'lucide-react';
-import RichMaterialGenerator from '../components/igcse/RichMaterialGenerator';
+// Removed RichMaterialGenerator - using direct API calls for real content
 import { DocumentGenerationResult } from '../types/api';
 
 interface GeneratedMaterial {
@@ -13,6 +13,7 @@ interface GeneratedMaterial {
   downloads: number;
   document_id?: string;
   available_formats?: string[];
+  download_urls?: Record<string, string>; // Format to download URL mapping
   r2_files?: Array<{
     format: string;
     version: string;
@@ -28,7 +29,7 @@ const TeacherDashboard: React.FC = () => {
   const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedMaterial[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
-  const [useRichGenerator, setUseRichGenerator] = useState(true);
+  // Removed rich generator toggle - always use real generated content
 
   const topics = [
     'Number', 'Algebra and graphs', 'Coordinate geometry', 'Geometry', 
@@ -68,52 +69,25 @@ const TeacherDashboard: React.FC = () => {
     setIsLoadingDocuments(false);
   };
 
-  // Handler for rich material generation
-  const handleRichMaterialGenerated = (result: DocumentGenerationResult) => {
-    if (result.success) {
-      // Get available formats from the new API response
-      const availableFormats = result.downloads 
-        ? Object.keys(result.downloads).filter(format => result.downloads?.[format as keyof typeof result.downloads]?.available)
-        : ['markdown'];
+  // Removed handleRichMaterialGenerated - now using direct API calls
 
-      const newDocument: GeneratedMaterial = {
-        id: result.document_id || result.document?.document_id || `doc_${Date.now()}`,
-        document_id: result.document_id || result.document?.document_id || `doc_${Date.now()}`,
-        title: result.metadata?.title || result.document?.title || result.document?.enhanced_title || 'Generated Material',
-        type: (result.metadata?.document_type || result.document?.document_type || 'worksheet') as 'worksheet' | 'notes' | 'assessment',
-        topics: [result.metadata?.topic || result.document?.document_type?.replace('_', ' ') || 'General'],
-        difficulty: result.metadata?.detail_level === 1 ? 'Easy' : 
-                   result.metadata?.detail_level >= 9 ? 'Hard' : 'Medium',
-        createdAt: new Date(),
-        downloads: 0,
-        available_formats: availableFormats,
-        r2_files: []
-      };
-
-      setGeneratedDocuments(prev => [newDocument, ...prev]);
-      
-      // Parse generation time (handle both string and number formats)
-      const generationTime = result.generation_time 
-        ? (typeof result.generation_time === 'string' ? parseFloat(result.generation_time) : result.generation_time)
-        : (result.processing_time || 0);
-      
-      // Show success notification
-      alert(`✅ ${newDocument.title} generated successfully!\n` +
-            `Processing time: ${generationTime.toFixed(2)}s\n` +
-            `Available formats: ${availableFormats.join(', ')}\n` +
-            `Document is now available in your materials list.`);
-    }
-  };
-
-  const handleDownload = async (documentId: string, format: string = 'html', version: string = 'student') => {
+  const handleDownload = async (material: GeneratedMaterial, format: string = 'pdf') => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/documents/${documentId}/download?format=${format}&version=${version}`);
-      if (response.ok) {
-        const data = await response.json();
-        // Open the presigned URL in a new tab
-        window.open(data.download_url, '_blank');
+      // Find the document in generatedDocuments that has the download URLs
+      const documentWithDownloads = generatedDocuments.find(doc => doc.id === material.id);
+      
+      if (documentWithDownloads?.download_urls?.[format]) {
+        // Use the pre-generated download URL from the /generate-markdown response
+        window.open(documentWithDownloads.download_urls[format], '_blank');
       } else {
-        throw new Error('Failed to get download URL');
+        // Fallback to the old API endpoint if needed
+        const response = await fetch(`${API_BASE_URL}/api/documents/${material.document_id}/download?format=${format}&version=student`);
+        if (response.ok) {
+          const data = await response.json();
+          window.open(data.download_url, '_blank');
+        } else {
+          throw new Error('Failed to get download URL');
+        }
       }
     } catch (error) {
       console.error('Download failed:', error);
@@ -179,6 +153,16 @@ const TeacherDashboard: React.FC = () => {
           format => result.downloads?.[format as keyof typeof result.downloads]?.available
         );
 
+        // Extract download URLs from the response
+        const downloadUrls: Record<string, string> = {};
+        if (result.downloads) {
+          Object.entries(result.downloads).forEach(([format, downloadInfo]) => {
+            if (downloadInfo.available && downloadInfo.download_url) {
+              downloadUrls[format] = downloadInfo.download_url;
+            }
+          });
+        }
+
         // Add to generated documents
         const newDocument: GeneratedMaterial = {
           id: result.document_id || result.document?.document_id || `doc_${Date.now()}`,
@@ -190,6 +174,7 @@ const TeacherDashboard: React.FC = () => {
           createdAt: new Date(),
           downloads: 0,
           available_formats: availableFormats.length > 0 ? availableFormats : ['markdown'],
+          download_urls: downloadUrls,
           r2_files: []
         };
 
@@ -291,41 +276,14 @@ const TeacherDashboard: React.FC = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Material Generator */}
           <div className="lg:col-span-2">
-            {/* Generator Mode Toggle */}
+            {/* Material Generation */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Generate New Material</h2>
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">Basic</span>
-                  <button
-                    onClick={() => setUseRichGenerator(!useRichGenerator)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                      useRichGenerator ? 'bg-green-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        useRichGenerator ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                  <span className="text-sm text-gray-600 flex items-center">
-                    <Sparkles className="w-4 h-4 mr-1" />
-                    Rich
-                  </span>
-                </div>
-              </div>
+              <h2 className="text-xl font-semibold text-gray-900">Generate New Material</h2>
             </div>
 
-            {/* Conditional Generator */}
-            {useRichGenerator ? (
-              <RichMaterialGenerator
-                onMaterialGenerated={handleRichMaterialGenerated}
-                showValidation={true}
-              />
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">Basic Generator</h3>
+            {/* Material Generator */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-6">Generate Educational Materials</h3>
             
             <div className="space-y-6">
               {/* Material Type */}
@@ -471,22 +429,31 @@ const TeacherDashboard: React.FC = () => {
                         <h3 className="font-medium text-gray-900 text-sm">{material.title}</h3>
                       </div>
                       <div className="flex space-x-1">
-                        {material.available_formats?.includes('html') && (
+                        {material.available_formats?.includes('pdf') && (
                           <button 
-                            onClick={() => handleDownload(material.document_id!, 'html', 'student')}
-                            className="text-blue-600 hover:text-blue-700 p-1 rounded"
-                            title="Download HTML (Student)"
+                            onClick={() => handleDownload(material, 'pdf')}
+                            className="text-red-600 hover:text-red-700 p-1 rounded"
+                            title="Download PDF"
                           >
-                            <ExternalLink size={14} />
+                            <Download size={14} />
                           </button>
                         )}
                         {material.available_formats?.includes('html') && (
                           <button 
-                            onClick={() => handleDownload(material.document_id!, 'html', 'teacher')}
-                            className="text-green-600 hover:text-green-700 p-1 rounded"
-                            title="Download HTML (Teacher)"
+                            onClick={() => handleDownload(material, 'html')}
+                            className="text-blue-600 hover:text-blue-700 p-1 rounded"
+                            title="Download HTML"
                           >
-                            <Download size={14} />
+                            <ExternalLink size={14} />
+                          </button>
+                        )}
+                        {material.available_formats?.includes('docx') && (
+                          <button 
+                            onClick={() => handleDownload(material, 'docx')}
+                            className="text-green-600 hover:text-green-700 p-1 rounded"
+                            title="Download DOCX"
+                          >
+                            <FileText size={14} />
                           </button>
                         )}
                       </div>

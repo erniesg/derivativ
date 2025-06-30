@@ -150,7 +150,6 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
     <div className={`space-y-6 ${className}`}>
       {/* Generation Form */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Generate Rich Educational Material</h2>
         
         <GenerationForm
           onGenerate={handleGenerate}
