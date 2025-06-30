@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthGuard } from '../components/auth/AuthGuard';
 import { useUser } from '../contexts/UserContext';
+import { useAuth } from '../contexts/AuthContext';
 import { TldrawWorkArea } from '../components/TldrawWorkArea';
 import { Send, Check, X } from 'lucide-react';
 
@@ -14,16 +15,36 @@ interface Question {
 }
 
 const Practice: React.FC = () => {
-  const { userRole } = useUser();
+  const { userRole, setUserRole, roleLoading } = useUser();
+  const { user: authUser } = useAuth();
 
-  // Redirect teachers to generation page
+  // Sync user role with authenticated user's backend profile role
+  useEffect(() => {
+    if (authUser?.role && authUser.role !== userRole) {
+      setUserRole(authUser.role);
+    }
+  }, [authUser?.role, userRole, setUserRole]);
+
+  // Show loading while role is being determined from backend profile
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect non-students away from this page
   if (userRole !== 'student') {
     return (
       <AuthGuard>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold text-gray-900">Access Restricted</h1>
-            <p className="text-gray-600">Practice sessions are only available to students.</p>
+            <p className="text-gray-600">This page is only available to students.</p>
             <button
               onClick={() => window.location.href = '/teacher/generate'}
               className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"

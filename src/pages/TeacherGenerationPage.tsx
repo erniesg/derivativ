@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DocumentGenerationRequest,
   DocumentGenerationResult,
@@ -7,16 +7,37 @@ import {
 import { apiService } from '../services/api';
 import { AuthGuard } from '../components/auth/AuthGuard';
 import { useUser } from '../contexts/UserContext';
+import { useAuth } from '../contexts/AuthContext';
 import GenerationForm from '../components/igcse/GenerationForm';
 import MaterialPreview from '../components/igcse/MaterialPreview';
 import DownloadManager from '../components/igcse/DownloadManager';
 import RichMaterialGenerator from '../components/igcse/RichMaterialGenerator';
 
 const TeacherGenerationPage: React.FC = () => {
-  const { userRole } = useUser();
+  const { userRole, setUserRole, roleLoading } = useUser();
+  const { user: authUser } = useAuth();
   const [generationState, setGenerationState] = useState<GenerationState>('idle');
   const [generationResult, setGenerationResult] = useState<DocumentGenerationResult | null>(null);
   const [lastRequest, setLastRequest] = useState<DocumentGenerationRequest | null>(null);
+
+  // Sync user role with authenticated user's backend profile role
+  useEffect(() => {
+    if (authUser?.role && authUser.role !== userRole) {
+      setUserRole(authUser.role);
+    }
+  }, [authUser?.role, userRole, setUserRole]);
+
+  // Show loading while role is being determined from backend profile
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Redirect students to dashboard
   if (userRole !== 'teacher') {

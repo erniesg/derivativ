@@ -9,12 +9,70 @@ import { Link } from 'react-router-dom';
 import { Target, Award, ChevronRight } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-  const { user, setUser, userRole } = useUser();
+  const { user, setUser, userRole, setUserRole, roleLoading } = useUser();
   const { assessmentData, setAssessmentData } = useAssessment();
   const { user: authUser } = useAuth();
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Redirect teachers to generation page
+  // Sync user role with authenticated user's backend profile role
+  useEffect(() => {
+    if (authUser?.role && authUser.role !== userRole) {
+      setUserRole(authUser.role);
+    }
+  }, [authUser?.role, userRole, setUserRole]);
+
+  // Load profile data if authenticated but user data not set
+  useEffect(() => {
+    if (authUser && !user && !profileLoading) {
+      loadUserProfileData();
+    }
+  }, [authUser, user, profileLoading]);
+
+  const loadUserProfileData = async () => {
+    if (!authUser) return;
+
+    setProfileLoading(true);
+
+    try {
+      // Load user profile from your backend API
+      const { user: profileUser, assessmentData } = await AuthService.loadUserProfile();
+
+      if (profileUser) {
+        // Successfully loaded profile data
+        setUser(profileUser);
+        setAssessmentData(assessmentData);
+      } else {
+        // Fallback to default data if profile loading fails completely
+        console.warn('Using fallback user data due to profile loading failure');
+        const defaultData = AuthService.createDefaultUserData(authUser);
+        setUser(defaultData.user);
+        setAssessmentData(defaultData.assessmentData);
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+
+      // Fallback to default data if API fails
+      const defaultData = AuthService.createDefaultUserData(authUser);
+      setUser(defaultData.user);
+      setAssessmentData(defaultData.assessmentData);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // Show loading while role is being determined from backend profile
+  if (roleLoading || !userRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect teachers to generation page (after all hooks)
   if (userRole !== 'student') {
     return (
       <AuthGuard>
@@ -33,40 +91,6 @@ const Dashboard: React.FC = () => {
       </AuthGuard>
     );
   }
-
-  // Load profile data if authenticated but user data not set
-  useEffect(() => {
-    if (authUser && !user && !profileLoading) {
-      loadUserProfileData();
-    }
-  }, [authUser, user, profileLoading]);
-
-  const loadUserProfileData = async () => {
-    if (!authUser) return;
-
-    setProfileLoading(true);
-
-    try {
-      // Load user profile from your backend API
-      const { user, assessmentData } = await AuthService.loadUserProfile();
-
-      let finalUserData = user;
-      let finalAssessmentData = assessmentData;
-
-      // Set the user and assessment data
-      setUser(finalUserData);
-      setAssessmentData(finalAssessmentData);
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-
-      // Fallback to default data if API fails
-      // const defaultData = AuthService.createDefaultUserData(authUser);
-      // setUser(defaultData.user);
-      // setAssessmentData(defaultData.assessmentData);
-    } finally {
-      setProfileLoading(false);
-    }
-  };
 
   if (!user || !assessmentData || profileLoading) {
     return (

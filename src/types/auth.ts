@@ -1,4 +1,3 @@
-
 export interface AppUser {
   id: string
   email: string
@@ -8,6 +7,8 @@ export interface AppUser {
   provider?: 'discord' | 'github' | 'twitter'
   created_at: string
   updated_at: string
+  last_login?: string | null
+  is_active?: boolean
   
   // Student-specific fields
   examSession?: string

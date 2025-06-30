@@ -33,15 +33,43 @@ export function AuthCallback() {
       const pendingFormData = sessionStorage.getItem('pendingFormData')
       const redirectTo = sessionStorage.getItem('authRedirectTo') || '/dashboard'
 
-      // Load user profile from your backend API
+      // Try to fetch existing backend profile first
+      let backendProfile = await AuthService.fetchBackendProfile()
+
+      // If no profile exists in backend, create one
+      if (!backendProfile) {
+        console.log('No backend profile found, creating new profile')
+
+        // Determine default role and school from pending form data or defaults
+        let defaultRole: 'student' | 'teacher' = 'student'
+        let defaultSchool = ''
+
+        if (pendingFormData) {
+          try {
+            const formData = JSON.parse(pendingFormData)
+            defaultRole = formData.role || 'student'
+            defaultSchool = formData.school || ''
+          } catch (error) {
+            console.error('Error parsing pending form data:', error)
+          }
+        }
+
+        // Create profile in backend
+        backendProfile = await AuthService.createBackendProfile({
+          role: defaultRole,
+          school: defaultSchool
+        })
+      }
+
+      // Load complete user profile (this will now find the created profile)
       const { user: profileUser, assessmentData: profileAssessmentData } = await AuthService.loadUserProfile()
 
       let finalUserData = profileUser
       let finalAssessmentData = profileAssessmentData
 
-      // If no profile exists in your backend, create default data
+      // Fallback if profile loading still fails
       if (!profileUser) {
-        console.log('No profile found, creating default data')
+        console.log('Profile loading failed, using default data')
         const defaultData = AuthService.createDefaultUserData(authUser)
         finalUserData = defaultData.user
         finalAssessmentData = defaultData.assessmentData
