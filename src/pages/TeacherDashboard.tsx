@@ -31,8 +31,8 @@ const TeacherDashboard: React.FC = () => {
   const [useRichGenerator, setUseRichGenerator] = useState(true);
 
   const topics = [
-    'Algebra', 'Geometry', 'Trigonometry', 'Statistics', 
-    'Number Theory', 'Calculus', 'Probability', 'Functions'
+    'Number', 'Algebra and graphs', 'Coordinate geometry', 'Geometry', 
+    'Mensuration', 'Trigonometry', 'Transformations and vectors', 'Probability', 'Statistics'
   ];
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -144,7 +144,7 @@ const TeacherDashboard: React.FC = () => {
         document_type: materialType === 'assessment' ? 'worksheet' : materialType as 'worksheet' | 'notes',
         detail_level: detailLevel, // Now using integer values directly
         title: `${selectedTopics.join(' & ')} ${materialType.charAt(0).toUpperCase() + materialType.slice(1)}`,
-        topic: selectedTopics.join(', ').toLowerCase().replace(/\s+/g, '_'),
+        topic: selectedTopics[0], // Use the first selected topic directly
         tier: 'Core' as const,
         grade_level: targetLevel === 'IGCSE' ? 7 : targetLevel === 'A-Level' ? 12 : 10,
         auto_include_questions: true,
