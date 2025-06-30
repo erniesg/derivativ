@@ -6,13 +6,13 @@ const About: React.FC = () => {
       name: 'Ali',
       role: 'Ex-IGCSE Student & Chief Engineer',
       description: 'Passionate about leveraging AI to revolutionize education and make learning accessible to everyone.',
-      avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=1'
+      avatar: 'https://github.com/erniesg/derivativ/blob/main/public/ali.jpg?raw=true'
     },
     {
       name: 'Ernie',
       role: 'Ex-IB Tutor & Founder',
       description: 'Former IGCSE math teacher with 8+ years of experience helping students achieve their academic goals.',
-      avatar: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=1'
+      avatar: 'https://github.com/erniesg/derivativ/blob/main/public/ernie.jpg?raw=true'
     }
   ];
 
