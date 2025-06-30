@@ -123,7 +123,7 @@ const TopicSelector: React.FC<TopicSelectorProps> = ({
         </h3>
         <div className="text-sm text-gray-500">
           {selectedTopics.length} topic{selectedTopics.length !== 1 ? 's' : ''} selected
-          {maxSelection && ` (max ${maxSelection})`}
+          {maxSelection === 1 ? ' (select 1)' : maxSelection ? ` (max ${maxSelection})` : ''}
         </div>
       </div>
       

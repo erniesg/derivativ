@@ -47,12 +47,6 @@ const DOCUMENT_TYPE_OPTIONS = [
     description: 'Comprehensive learning material',
     icon: '📖'
   },
-  {
-    value: DocumentType.SLIDES,
-    label: 'Presentation',
-    description: 'Teaching slides and visuals',
-    icon: '🎨'
-  }
 ];
 
 const GenerationForm: React.FC<GenerationFormProps> = ({
@@ -99,8 +93,8 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
     const request: DocumentGenerationRequest = {
       document_type: formState.documentType,
       detail_level: formState.detailLevel,
-      title: `${formState.documentType} - ${formState.selectedTopics.join(', ')}`,
-      topic: formState.selectedTopics.join(', '),
+      title: `${formState.documentType} - ${formState.selectedTopics[0] || 'General'}`,
+      topic: formState.selectedTopics[0] || '',
       tier: formState.selectedTier,
       grade_level: formState.selectedTier === Tier.CORE ? "7-9" : "9-10", // Convert to string format expected by backend
       auto_include_questions: true,
@@ -161,7 +155,7 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
       <TopicSelector
         selectedTopics={formState.selectedTopics}
         onTopicsChange={(topics) => updateFormState({ selectedTopics: topics })}
-        maxSelection={3}
+        maxSelection={1}
       />
 
       {/* Tier Selection */}
