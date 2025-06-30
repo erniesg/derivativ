@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AuthGuard } from '../components/auth/AuthGuard';
+import { useUser } from '../contexts/UserContext';
 import { TldrawWorkArea } from '../components/TldrawWorkArea';
 import { Play, BookOpen, FileText, Video, ChevronRight, Clock, Star, Send, Volume2, Pause, SkipForward } from 'lucide-react';
 
@@ -28,6 +29,28 @@ interface PersonalizedVideo {
 }
 
 const Learn: React.FC = () => {
+  const { userRole } = useUser();
+
+  // Redirect teachers to generation page
+  if (userRole !== 'student') {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-gray-900">Access Restricted</h1>
+            <p className="text-gray-600">Learning modules are only available to students.</p>
+            <button
+              onClick={() => window.location.href = '/teacher/generate'}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Go to Teacher Dashboard
+            </button>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
   const [selectedTopic, setSelectedTopic] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [activeModule, setActiveModule] = useState<string | null>(null);

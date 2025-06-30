@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { AuthGuard } from '../components/auth/AuthGuard';
+import { useUser } from '../contexts/UserContext';
 import { AuthService } from '../services/auth';
 import LaTeXRenderer from '../components/LaTeXRenderer';
 import { Clock, CheckCircle, XCircle, ArrowRight, Loader2 } from 'lucide-react';
@@ -97,6 +98,7 @@ const getTopicName = (topicId: number): string => {
 };
 
 const Assessment: React.FC = () => {
+  const { userRole } = useUser();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
@@ -111,6 +113,26 @@ const Assessment: React.FC = () => {
   const [completeResults, setCompleteResults] = useState<CompleteResponse['data'] | null>(null);
   const [currentFeedback, setCurrentFeedback] = useState<SubmissionResult | null>(null);
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
+
+  // Redirect teachers to generation page
+  if (userRole !== 'student') {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-gray-900">Access Restricted</h1>
+            <p className="text-gray-600">Assessments are only available to students.</p>
+            <button
+              onClick={() => window.location.href = '/teacher/generate'}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Go to Teacher Dashboard
+            </button>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   // Initialize quiz session and load questions
   const initializeQuiz = useCallback(async () => {

@@ -1,121 +1,23 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
-import { useAssessment } from '../contexts/AssessmentContext';
 import { useAuth } from '../contexts/AuthContext';
-import { SocialLoginButtons } from '../components/auth/LoginButton';
+import { AuthGuard } from '../components/auth/AuthGuard';
 import BoltBadge from '../components/BoltBadge';
-import { Sparkles, FileText, Calculator, Target, Triangle, Square, Palette, Brain } from 'lucide-react';
+import { Sparkles, FileText, Calculator, Target, Triangle, Square, Palette, Brain, BookOpen, Users } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
-  const { userRole, setUser } = useUser();
-  const { setAssessmentData } = useAssessment();
+  const { userRole } = useUser();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    examSession: '',
-    school: '',
-    subjects: [] as string[],
-    gradeLevels: [] as string[],
-    schoolType: ''
-  });
-
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'assessment' | 'dashboard'>('dashboard');
-
-  const handleAuthRequired = (mode: 'assessment' | 'dashboard') => {
-    // For teachers, skip form and go directly to generation page
-    if (userRole === 'teacher' && mode === 'dashboard') {
-      if (user) {
-        navigate('/teacher/generate');
-      } else {
-        sessionStorage.setItem('authRedirectTo', '/teacher/generate');
-        setAuthMode('dashboard');
-        setShowAuthModal(true);
-      }
-      return;
-    }
-
-    if (user) {
-      // User is already authenticated, proceed directly
-      if (mode === 'assessment') {
-        handleTakeAssessment();
-      } else {
-        handleSubmit();
-      }
-    } else {
-      // Store form data and show auth modal
-      sessionStorage.setItem('pendingFormData', JSON.stringify(formData));
-      sessionStorage.setItem('authRedirectTo', mode === 'assessment' ? '/assessment' : '/dashboard');
-      setAuthMode(mode);
-      setShowAuthModal(true);
-    }
-  };
-
-  const handleSubmit = () => {
-    const userData = {
-      id: user?.id || Math.random().toString(36).substr(2, 9),
-      name: user?.name || 'User',
-      email: user?.email || '',
-      role: userRole,
-      ...formData
-    };
-
-    setUser(userData);
-
+  const handleNavigateToApp = () => {
     if (userRole === 'student') {
-      // Initialize assessment data for students
-      const initialAssessment = {
-        userId: userData.id,
-        topicScores: [
-          { topic: 'Algebra', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const },
-          { topic: 'Geometry', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const },
-          { topic: 'Trigonometry', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const },
-          { topic: 'Statistics', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const },
-          { topic: 'Number Theory', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const }
-        ],
-        overallLevel: 5,
-        recommendedTopics: ['Algebra', 'Geometry'],
-        lastAssessment: new Date()
-      };
-      setAssessmentData(initialAssessment);
       navigate('/dashboard');
     } else {
       navigate('/teacher/generate');
     }
   };
-
-  const handleTakeAssessment = () => {
-    const userData = {
-      id: user?.id || Math.random().toString(36).substr(2, 9),
-      name: user?.name || 'User',
-      email: user?.email || '',
-      role: userRole,
-      ...formData
-    };
-
-    setUser(userData);
-
-    // Initialize assessment data for students
-    const initialAssessment = {
-      userId: userData.id,
-      topicScores: [
-        { topic: 'Algebra', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const },
-        { topic: 'Geometry', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const },
-        { topic: 'Trigonometry', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const },
-        { topic: 'Statistics', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const },
-        { topic: 'Number Theory', score: 5, attempts: 0, recentPerformance: [], difficulty: 'medium' as const }
-      ],
-      overallLevel: 5,
-      recommendedTopics: ['Algebra', 'Geometry'],
-      lastAssessment: new Date()
-    };
-    setAssessmentData(initialAssessment);
-    navigate('/assessment');
-  };
-
-  const gradeLevels = ['Year 9', 'Year 10', 'Year 11', 'Year 12', 'Year 13', 'Mixed'];
 
   const isStudent = userRole === 'student';
   const themeColors = isStudent
@@ -123,275 +25,118 @@ const LandingPage: React.FC = () => {
     : { primary: 'green', secondary: 'emerald', gradient: 'from-green-600 to-emerald-600' };
 
   return (
-    <div className="max-h-screen bg-gradient-to-br from-gray-50 to-white">
-      {/* Bolt.new Badge */}
-      <BoltBadge variant="black" position="bottom-right" />
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+        {/* Bolt.new Badge */}
+        <BoltBadge variant="black" position="bottom-right" />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Left Column - Content */}
-          <div className="space-y-6 lg:space-y-8 text-center lg:text-left">
-            <div className="space-y-4 lg:space-y-6">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+          <div className="text-center space-y-8 lg:space-y-12">
+            {/* Hero Section */}
+            <div className="space-y-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
                 <span className={`text-transparent bg-clip-text bg-gradient-to-r ${themeColors.gradient}`}>
-                  AI that {isStudent ? 'helps you ace' : 'creates perfect lesson materials'}
+                  AI-Powered
                 </span>
                 <br />
                 <span className="text-gray-900">
-                  {isStudent ? 'your IGCSE math exam' : 'instantly for your classroom'}
+                  IGCSE Mathematics Platform
                 </span>
               </h1>
 
-              <p className="text-lg sm:text-xl text-gray-600 max-w-lg mx-auto lg:mx-0">
+              <p className="text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto">
                 {isStudent
-                  ? 'Learn the way you want to'
-                  : 'Generate comprehensive teaching materials with AI precision'}
-              </p>
-            </div>
-
-            {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
-              {isStudent ? (
-                <>
-                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
-                    <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.primary}-100 rounded-xl flex items-center justify-center`}>
-                      <FileText className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.primary}-600`} />
-                    </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Smart Materials</p>
-                  </div>
-                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
-                    <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.secondary}-100 rounded-xl flex items-center justify-center`}>
-                      <Target className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.secondary}-600`} />
-                    </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Targeted Practice</p>
-                  </div>
-                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
-                    <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                      <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
-                    </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Any Format</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
-                    <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.primary}-100 rounded-xl flex items-center justify-center`}>
-                      <Triangle className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.primary}-600`} />
-                    </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Syllabus-Compliant</p>
-                  </div>
-                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
-                    <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.secondary}-100 rounded-xl flex items-center justify-center`}>
-                      <Square className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.secondary}-600`} />
-                    </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Generate Immediately</p>
-                  </div>
-                  <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
-                    <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                      <Palette className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
-                    </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Multiple Formats</p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Right Column - Form */}
-          <div className={`bg-white rounded-2xl shadow-xl border-2 border-${themeColors.primary}-100 p-6 lg:p-8 order-first lg:order-last`}>
-            <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
-              <h2 className="text-xl lg:text-2xl font-bold text-gray-900 text-center lg:text-left">
-                {isStudent ? 'Tell us about yourself' : 'Tell us about your teaching needs'}
-              </h2>
-
-              {isStudent ? (
-                <>
-                  {/* Student Form */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Your IGCSE Exam Session
-                    </label>
-                    <select
-                      value={formData.examSession}
-                      onChange={(e) => setFormData({ ...formData, examSession: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">Select your exam session</option>
-                      <option value="May/June 2025">May/June 2025</option>
-                      <option value="October/November 2025">October/November 2025</option>
-                      <option value="May/June 2026">May/June 2026</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Assess Your Current Level
-                    </label>
-                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Brain className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900">Take Auto-Assessment</h4>
-                          <p className="text-sm text-gray-600">Let AI determine your strengths and weaknesses</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleAuthRequired('assessment')}
-                        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200"
-                      >
-                        <Target className="inline-block w-4 h-4 mr-2" />
-                        Start Assessment Quiz
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Teacher Form */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Primary Subject Focus
-                    </label>
-                    <select
-                      value={formData.subjects[0] || ''}
-                      onChange={(e) => setFormData({ ...formData, subjects: [e.target.value] })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
-                    >
-                      <option value="">Select your main subject</option>
-                      <option value="Mathematics">Mathematics</option>
-                      <option value="Additional Mathematics">Additional Mathematics</option>
-                      <option value="Statistics">Statistics</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Grade Levels You Teach
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {gradeLevels.map((level) => (
-                        <button
-                          key={level}
-                          type="button"
-                          onClick={() => {
-                            const currentLevels = formData.gradeLevels;
-                            const newLevels = currentLevels.includes(level)
-                              ? currentLevels.filter(l => l !== level)
-                              : [...currentLevels, level];
-                            setFormData({ ...formData, gradeLevels: newLevels });
-                          }}
-                          className={`py-3 px-4 rounded-lg border-2 transition-all duration-200 ${formData.gradeLevels.includes(level)
-                            ? 'border-green-500 bg-green-50 text-green-700 font-semibold'
-                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                            }`}
-                        >
-                          {level}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      School Type
-                    </label>
-                    <select
-                      value={formData.schoolType}
-                      onChange={(e) => setFormData({ ...formData, schoolType: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      required
-                    >
-                      <option value="">Select school type</option>
-                      <option value="International School">International School</option>
-                      <option value="Local School">Local School</option>
-                      <option value="Private Tuition">Private Tuition</option>
-                      <option value="Online Teaching">Online Teaching</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  School (optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.school}
-                  onChange={(e) => setFormData({ ...formData, school: e.target.value })}
-                  placeholder={isStudent ? "e.g., Singapore International School" : "e.g., Cambridge International School"}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div> */}
-
-              {isStudent && (
-                <button
-                  type="button"
-                  onClick={() => handleAuthRequired('dashboard')}
-                  className={`w-full bg-gradient-to-r ${themeColors.gradient} text-white py-4 px-6 rounded-lg font-semibold text-lg hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200`}
-                >
-                  <Sparkles className="inline-block w-5 h-5 mr-2" />
-                  Ace My Exam →
-                </button>
-              )}
-
-              {!isStudent && (
-                <button
-                  type="submit"
-                  className={`w-full bg-gradient-to-r ${themeColors.gradient} text-white py-4 px-6 rounded-lg font-semibold text-lg hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200`}
-                >
-                  <Sparkles className="inline-block w-5 h-5 mr-2" />
-                  Start Creating Materials →
-                </button>
-              )}
-
-              <p className="text-sm text-gray-500 text-center">
-                {isStudent
-                  ? 'Used to generate UI & personalize your learning experience'
-                  : 'This will generate your teaching materials dashboard'
+                  ? 'Personalized learning and assessment tools to help you excel in your IGCSE Math exams'
+                  : 'Generate comprehensive teaching materials and assessments with AI precision'
                 }
               </p>
-            </form>
-          </div>
-        </div>
-      </main>
+            </div>
 
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Target className="w-8 h-8 text-white" />
+            {/* Features Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              {isStudent ? (
+                <>
+                  <div className="text-center space-y-4 p-6">
+                    <div className={`mx-auto w-16 h-16 bg-${themeColors.primary}-100 rounded-2xl flex items-center justify-center`}>
+                      <Brain className={`w-8 h-8 text-${themeColors.primary}-600`} />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Smart Assessment</h3>
+                    <p className="text-gray-600">AI-powered assessments that adapt to your learning level and identify areas for improvement</p>
+                  </div>
+                  <div className="text-center space-y-4 p-6">
+                    <div className={`mx-auto w-16 h-16 bg-${themeColors.secondary}-100 rounded-2xl flex items-center justify-center`}>
+                      <Target className={`w-8 h-8 text-${themeColors.secondary}-600`} />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Targeted Practice</h3>
+                    <p className="text-gray-600">Personalized practice problems focused on your weakest topics and exam requirements</p>
+                  </div>
+                  <div className="text-center space-y-4 p-6">
+                    <div className="mx-auto w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
+                      <BookOpen className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Interactive Learning</h3>
+                    <p className="text-gray-600">Engaging materials and step-by-step solutions to master complex mathematical concepts</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-center space-y-4 p-6">
+                    <div className={`mx-auto w-16 h-16 bg-${themeColors.primary}-100 rounded-2xl flex items-center justify-center`}>
+                      <Triangle className={`w-8 h-8 text-${themeColors.primary}-600`} />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Curriculum Aligned</h3>
+                    <p className="text-gray-600">All materials are perfectly aligned with Cambridge IGCSE Mathematics syllabus requirements</p>
+                  </div>
+                  <div className="text-center space-y-4 p-6">
+                    <div className={`mx-auto w-16 h-16 bg-${themeColors.secondary}-100 rounded-2xl flex items-center justify-center`}>
+                      <Square className={`w-8 h-8 text-${themeColors.secondary}-600`} />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Instant Generation</h3>
+                    <p className="text-gray-600">Create worksheets, assessments, and teaching materials in seconds with our AI engine</p>
+                  </div>
+                  <div className="text-center space-y-4 p-6">
+                    <div className="mx-auto w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center">
+                      <Users className="w-8 h-8 text-orange-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">Flexible Formats</h3>
+                    <p className="text-gray-600">Multiple output formats including PDFs, interactive content, and printable materials</p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Call to Action */}
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className={`bg-gradient-to-r ${themeColors.gradient} rounded-2xl p-8 text-white`}>
+                <h2 className="text-2xl lg:text-3xl font-bold mb-4">
+                  Welcome {user?.name || (isStudent ? 'Student' : 'Teacher')}!
+                </h2>
+                <p className="text-lg mb-6 opacity-90">
+                  {isStudent
+                    ? 'Ready to boost your IGCSE Math performance? Access your personalized dashboard to start learning.'
+                    : 'Ready to create amazing teaching materials? Access your generation tools to get started.'
+                  }
+                </p>
+                <button
+                  onClick={handleNavigateToApp}
+                  className="bg-white text-gray-900 py-4 px-8 rounded-xl font-semibold text-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center mx-auto"
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  {isStudent ? 'Go to Dashboard' : 'Start Creating Materials'}
+                </button>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Sign in to {authMode === 'assessment' ? 'Start Your Assessment' : 'Ace Your Exam'}
-              </h2>
-              <p className="text-gray-600">
-                {authMode === 'assessment'
-                  ? 'Sign in to take your personalized assessment quiz and track your progress.'
-                  : 'Sign in to access your personalized dashboard and start your exam preparation journey.'
+
+              <p className="text-sm text-gray-500">
+                {isStudent
+                  ? 'Access your personalized learning dashboard, take assessments, and track your progress.'
+                  : 'Create worksheets, assessments, and teaching materials tailored to your classroom needs.'
                 }
               </p>
             </div>
-
-            <SocialLoginButtons />
-
-            <button
-              onClick={() => setShowAuthModal(false)}
-              className="w-full mt-4 py-2 px-4 text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Cancel
-            </button>
           </div>
-        </div>
-      )}
-    </div>
+        </main>
+      </div>
+    </AuthGuard>
   );
 };
 

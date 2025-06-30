@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AuthGuard } from '../components/auth/AuthGuard';
+import { useUser } from '../contexts/UserContext';
 import { TldrawWorkArea } from '../components/TldrawWorkArea';
 import { Send, Check, X } from 'lucide-react';
 
@@ -13,6 +14,28 @@ interface Question {
 }
 
 const Practice: React.FC = () => {
+  const { userRole } = useUser();
+
+  // Redirect teachers to generation page
+  if (userRole !== 'student') {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-gray-900">Access Restricted</h1>
+            <p className="text-gray-600">Practice sessions are only available to students.</p>
+            <button
+              onClick={() => window.location.href = '/teacher/generate'}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Go to Teacher Dashboard
+            </button>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
+
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [textAnswer, setTextAnswer] = useState('');
   const [showHints, setShowHints] = useState(false);

@@ -169,6 +169,8 @@ const Navigation: React.FC = () => {
                 </div>
               ) : null}
 
+
+
               {/* Teacher Dashboard Badge */}
               {userRole === 'teacher' && isTeacherPage && (
                 <div className="text-xs lg:text-sm text-gray-500 bg-green-50 px-2 lg:px-3 py-1 rounded-full">

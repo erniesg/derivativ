@@ -23,7 +23,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  
+
   // Initialize userRole from localStorage or default to 'teacher'
   const [userRole, setUserRoleState] = useState<'student' | 'teacher'>(() => {
     const saved = localStorage.getItem('derivativ-user-role');

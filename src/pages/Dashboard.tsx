@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,10 +9,30 @@ import { Link } from 'react-router-dom';
 import { Target, Award, ChevronRight } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-  const { user, setUser } = useUser();
+  const { user, setUser, userRole } = useUser();
   const { assessmentData, setAssessmentData } = useAssessment();
   const { user: authUser } = useAuth();
   const [profileLoading, setProfileLoading] = useState(false);
+
+  // Redirect teachers to generation page
+  if (userRole !== 'student') {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
+            <p className="text-gray-600">This is the student dashboard. Teachers should use the generation page.</p>
+            <button
+              onClick={() => window.location.href = '/teacher/generate'}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Go to Teacher Dashboard
+            </button>
+          </div>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   // Load profile data if authenticated but user data not set
   useEffect(() => {

@@ -23,7 +23,7 @@ function App() {
           <Router>
             <Layout>
               <Routes>
-                <Route path="/" element={<TeacherGenerationPage />} />
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/landing" element={<LandingPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/practice" element={<Practice />} />
