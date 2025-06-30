@@ -85,6 +85,7 @@ export interface DocumentGenerationRequest {
   include_answers?: boolean;
   include_working?: boolean;
   include_mark_schemes?: boolean;
+  use_database?: boolean; // New flag for database vs live generation
 }
 
 export interface DocumentGenerationResult {

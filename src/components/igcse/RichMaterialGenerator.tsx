@@ -221,19 +221,29 @@ const RichMaterialGenerator: React.FC<RichMaterialGeneratorProps> = ({
               </div>
             </div>
 
-            {/* Rich Document Content */}
-            <DocumentRenderer
-              document={{
-                ...generationResult.document,
-                markdown_content: generationResult.markdown_content,
-                document_id: generationResult.document_id || generationResult.document?.document_id,
-                title: generationResult.metadata?.title || generationResult.document?.title,
-                document_type: generationResult.metadata?.document_type || generationResult.document?.document_type,
-                ...generationResult.metadata
-              }}
-              renderMode="full"
-              showMetadata={true}
-            />
+            {/* Truncated Markdown Content */}
+            <div className="p-6">
+              <h4 className="text-lg font-semibold text-gray-900 mb-4">Generated Content Preview</h4>
+              {generationResult.markdown_content ? (
+                <div className="bg-gray-50 rounded-lg p-4 border max-h-96 overflow-hidden relative">
+                  <pre className="whitespace-pre-wrap font-mono text-sm text-gray-800 leading-relaxed">
+                    {generationResult.markdown_content.slice(0, 1000)}
+                    {generationResult.markdown_content.length > 1000 && '...'}
+                  </pre>
+                  {generationResult.markdown_content.length > 1000 && (
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 to-transparent flex items-end justify-center pb-2">
+                      <span className="text-sm text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                        Showing first 1000 characters. Use downloads for full content.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-yellow-800">No markdown content available in preview.</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Download Manager */}

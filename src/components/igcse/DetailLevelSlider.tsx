@@ -162,25 +162,6 @@ const DetailLevelSlider: React.FC<DetailLevelSliderProps> = ({
         </div>
       )}
 
-      {/* Alternative Compact View */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h4 className="font-medium text-gray-900 mb-3">Quick Comparison</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-          {DETAIL_LEVELS.map((level) => (
-            <div key={level.value} className={`
-              p-2 rounded border text-center transition-all duration-200
-              ${level.value === selectedLevel 
-                ? 'border-green-300 bg-green-50 text-green-700' 
-                : 'border-gray-200 bg-white text-gray-600'
-              }
-            `}>
-              <div className="text-lg mb-1">{level.icon}</div>
-              <div className="font-medium">{level.label}</div>
-              <div className="text-gray-500 mt-1">{level.estimatedTime}</div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

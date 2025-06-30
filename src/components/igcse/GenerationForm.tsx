@@ -18,14 +18,15 @@ interface GenerationFormProps {
 }
 
 interface FormState {
+  title: string;
   documentType: DocumentType;
   selectedTopics: TopicName[];
   selectedTier: Tier;
   detailLevel: DetailLevel;
-  title: string;
   maxQuestions: number;
   includeAnswers: boolean;
   includeWorking: boolean;
+  useDatabase: boolean;
 }
 
 const DOCUMENT_TYPE_OPTIONS = [
@@ -61,14 +62,15 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
   className = ''
 }) => {
   const [formState, setFormState] = useState<FormState>({
+    title: '',
     documentType: DocumentType.WORKSHEET,
     selectedTopics: [],
     selectedTier: Tier.CORE,
     detailLevel: DetailLevel.MEDIUM,
-    title: '',
     maxQuestions: 5,
     includeAnswers: true,
-    includeWorking: true
+    includeWorking: true,
+    useDatabase: true
   });
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -111,7 +113,8 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
       include_answers: formState.includeAnswers,
       include_working: formState.includeWorking,
       custom_sections: [],
-      exclude_content_types: []
+      exclude_content_types: [],
+      use_database: formState.useDatabase
     };
 
     await onGenerate(request);
@@ -126,6 +129,63 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-8 ${className}`}>
+      {/* Database vs Live Toggle */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900">Generation Mode</h3>
+        <div className="flex bg-gray-100 rounded-full p-1 w-fit">
+          <button
+            type="button"
+            onClick={() => updateFormState({ useDatabase: true })}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-full transition-all duration-300 ${
+              formState.useDatabase
+                ? 'bg-blue-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+            </svg>
+            <span className="font-medium">Database</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => updateFormState({ useDatabase: false })}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-full transition-all duration-300 ${
+              !formState.useDatabase
+                ? 'bg-green-500 text-white shadow-md'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+            </svg>
+            <span className="font-medium">Live</span>
+          </button>
+        </div>
+        <p className="text-sm text-gray-600">
+          {formState.useDatabase 
+            ? 'Search existing materials first, generate if not found'
+            : 'Generate fresh content using AI agents'
+          }
+        </p>
+      </div>
+
+      {/* Document Title */}
+      <div className="space-y-2">
+        <label htmlFor="title" className="block text-lg font-semibold text-gray-900">
+          Document Title
+        </label>
+        <input
+          id="title"
+          type="text"
+          value={formState.title}
+          onChange={(e) => updateFormState({ title: e.target.value })}
+          placeholder="e.g., IGCSE Algebra Practice Sheet"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          disabled={isGenerating}
+        />
+      </div>
+
       {/* Document Type Selection */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900">Document Type</h3>
@@ -156,21 +216,6 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
         </div>
       </div>
 
-      {/* Title Input */}
-      <div className="space-y-2">
-        <label htmlFor="title" className="block text-lg font-semibold text-gray-900">
-          Material Title
-        </label>
-        <input
-          id="title"
-          type="text"
-          value={formState.title}
-          onChange={(e) => updateFormState({ title: e.target.value })}
-          placeholder="e.g., IGCSE Algebra Practice Sheet"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          disabled={isGenerating}
-        />
-      </div>
 
       {/* Topic Selection */}
       <TopicSelector
@@ -263,28 +308,33 @@ const GenerationForm: React.FC<GenerationFormProps> = ({
       )}
 
       {/* Generate Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-center">
         <button
           type="submit"
           disabled={isGenerating}
           className={`
-            px-8 py-4 rounded-lg font-semibold text-white transition-all duration-200
+            px-12 py-4 rounded-xl font-semibold text-white transition-all duration-200 shadow-lg
             ${isGenerating
               ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-green-600 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2'
+              : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform hover:scale-105'
             }
           `}
         >
           {isGenerating ? (
-            <div className="flex items-center space-x-2">
-              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <div className="flex items-center space-x-3">
+              <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               <span>Generating...</span>
             </div>
           ) : (
-            'Generate Material'
+            <div className="flex items-center space-x-3">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
+              <span className="text-lg">Generate</span>
+            </div>
           )}
         </button>
       </div>
