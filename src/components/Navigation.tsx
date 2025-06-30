@@ -42,7 +42,7 @@ const Navigation: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
-              <div className="text-2xl sm:text-3xl font-bold text-black anta-regular transition-colors duration-300">
+              <div className="font-bold text-black anta-regular transition-colors duration-300" style={{ fontSize: '100px', lineHeight: '1' }}>
                 ∂
               </div>
               <span className="text-lg sm:text-xl font-semibold text-gray-900">Derivativ</span>
@@ -64,20 +64,6 @@ const Navigation: React.FC = () => {
                     <span className="hidden xl:inline">Generate Materials</span>
                     <span className="xl:hidden">Generate</span>
                   </Link>
-                  <Link
-                    to="/teacher"
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${location.pathname === '/teacher'
-                      ? 'text-green-600 font-semibold'
-                      : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                  >
-                    <FolderOpen size={16} />
-                    <span>Library</span>
-                  </Link>
-                  <span className="text-gray-400 hover:text-gray-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 cursor-not-allowed">
-                    <BarChart3 size={16} />
-                    <span>Analytics</span>
-                  </span>
                   <Link
                     to="/about"
                     className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
@@ -278,21 +264,6 @@ const Navigation: React.FC = () => {
                     <FileText size={20} />
                     <span>Generate Materials</span>
                   </Link>
-                  <Link
-                    to="/teacher"
-                    onClick={() => setShowMobileMenu(false)}
-                    className={`flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium transition-colors duration-200 ${location.pathname === '/teacher'
-                      ? 'text-green-600 bg-green-50 font-semibold'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                  >
-                    <FolderOpen size={20} />
-                    <span>Library</span>
-                  </Link>
-                  <div className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium text-gray-400 cursor-not-allowed">
-                    <BarChart3 size={20} />
-                    <span>Analytics</span>
-                  </div>
                   <Link
                     to="/about"
                     onClick={() => setShowMobileMenu(false)}
