@@ -8,7 +8,9 @@ class ApiService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    // Support both VITE_AI_API_URL (Netlify) and VITE_API_BASE_URL (local dev)
+    this.baseUrl = import.meta.env.VITE_AI_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    console.log('🚀 API Service initialized with URL:', this.baseUrl);
   }
 
   private async request<T>(
