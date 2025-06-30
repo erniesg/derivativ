@@ -124,13 +124,24 @@ const DownloadManager: React.FC<DownloadManagerProps> = ({
             } else if (response.data.r2_file_key && response.data.download_url) {
               // R2 file download via presigned URL
               triggerDownload(response.data.download_url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+            } else if (response.data.r2_file_key) {
+              // R2 file created but no presigned URL - show success message
+              console.log('R2 file created successfully, but download URL not available in response');
+              console.log('File stored at:', response.data.r2_file_key);
+              
+              // For now, show error to user that backend needs to be updated
+              throw new Error('File was created successfully but download URL is not available. Backend needs to be updated.');
             } else {
-              // R2 file created but no presigned URL - fallback to client-side generation
-              console.log('R2 file created but no download URL, using client-side generation');
-              const blob = await createBlob(generatedContent || {}, format);
-              const url = URL.createObjectURL(blob);
-              triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
-              URL.revokeObjectURL(url);
+              // Fallback to client-side generation if no R2 file was created
+              console.log('No R2 file created, using client-side generation');
+              if (generatedContent) {
+                const blob = await createBlob(generatedContent, format);
+                const url = URL.createObjectURL(blob);
+                triggerDownload(url, `${documentTitle}.${EXPORT_FORMATS.find(f => f.value === format)?.extension}`);
+                URL.revokeObjectURL(url);
+              } else {
+                throw new Error('No content available for download');
+              }
             }
           } else {
             throw new Error('No downloadable content returned');
