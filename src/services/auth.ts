@@ -2,6 +2,7 @@ import { supabase } from '../config/supabase'
 import { AuthProvider, AppUser } from '../types/auth'
 import { apiService } from './api'
 
+
 interface BackendProfile {
   id: string;
   role: 'student' | 'teacher';
@@ -44,7 +45,7 @@ export class AuthService {
   }
 
   // Create profile via backend API
-  static async createBackendProfile(profileData: { school: 'null'; role: 'student' | 'teacher' }): Promise<BackendProfile | null> {
+  static async createBackendProfile(profileData: { school: string; role: 'student' | 'teacher' }): Promise<BackendProfile | null> {
     try {
       const session = await this.getSession()
       if (!session?.access_token) {
@@ -154,7 +155,7 @@ export class AuthService {
   }
 
   // Load complete user profile from your backend API
-  static async loadUserProfile(): Promise<{ user: AppUser | null, assessmentData: any | null }> {
+  static async loadUserProfile(preferredRole?: 'student' | 'teacher'): Promise<{ user: AppUser | null, assessmentData: any | null }> {
     try {
       const session = await this.getSession()
       if (!session?.access_token) {
@@ -175,9 +176,11 @@ export class AuthService {
       if (!backendProfile) {
         console.log('No backend profile found, attempting to create one')
         
-        // Try to create a default profile
+        // Try to create a default profile with preferred role (fallback)
+        const roleToUse = preferredRole || 'student'
+        console.log('Creating default profile with role:', roleToUse)
         backendProfile = await this.createBackendProfile({
-          role: 'student', // Default to student
+          role: roleToUse, // Use preferred role or default to student as fallback
           school: "null"
         })
         

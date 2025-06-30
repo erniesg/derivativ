@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useUser } from '../../contexts/UserContext'
 import { useAssessment } from '../../contexts/AssessmentContext'
+import { useRole } from '../../contexts/RoleContext'
 import { AuthService } from '../../services/auth'
 
 export function AuthCallback() {
@@ -10,6 +11,7 @@ export function AuthCallback() {
   const { user: authUser, loading } = useAuth()
   const { setUser } = useUser()
   const { setAssessmentData } = useAssessment()
+  const { selectedRole } = useRole()
   const [profileLoading, setProfileLoading] = useState(false)
 
   useEffect(() => {
@@ -40,29 +42,31 @@ export function AuthCallback() {
       if (!backendProfile) {
         console.log('No backend profile found, creating new profile')
 
-        // Determine default role and school from pending form data or defaults
-        let defaultRole: 'student' | 'teacher' = 'student'
+        // Determine default role and school from selectedRole, pending form data, or defaults
+        let defaultRole: 'student' | 'teacher' = selectedRole || 'student'
         let defaultSchool = ''
 
         if (pendingFormData) {
           try {
             const formData = JSON.parse(pendingFormData)
-            defaultRole = formData.role || 'student'
+            defaultRole = formData.role || defaultRole
             defaultSchool = formData.school || ''
           } catch (error) {
             console.error('Error parsing pending form data:', error)
           }
         }
 
-        // Create profile in backend
+        // Create profile in backend using the globally selected role
+
+        console.log('Creating profile with role:', defaultRole)
         backendProfile = await AuthService.createBackendProfile({
           role: defaultRole,
-          school: defaultSchool
+          school: "null"
         })
       }
 
       // Load complete user profile (this will now find the created profile)
-      const { user: profileUser, assessmentData: profileAssessmentData } = await AuthService.loadUserProfile()
+      const { user: profileUser, assessmentData: profileAssessmentData } = await AuthService.loadUserProfile(selectedRole || undefined)
 
       let finalUserData = profileUser
       let finalAssessmentData = profileAssessmentData

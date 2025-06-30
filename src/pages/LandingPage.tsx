@@ -2,11 +2,13 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useRole } from '../contexts/RoleContext';
 import BoltBadge from '../components/BoltBadge';
 import { Sparkles, FileText, Calculator, Target, Triangle, Square, Palette, Brain, BookOpen, Users } from 'lucide-react';
 import { SocialLoginButtons } from '../components/auth/LoginButton';
 
 const LandingPage: React.FC = () => {
+  const { selectedRole, setSelectedRole } = useRole();
   const { userRole, setUserRole, roleLoading } = useUser();
   const { user: authUser, loading } = useAuth();
   const navigate = useNavigate();
@@ -42,7 +44,8 @@ const LandingPage: React.FC = () => {
     );
   }
 
-  const isStudent = userRole === 'student';
+  let isStudent = selectedRole === 'student';
+
   const themeColors = isStudent
     ? { primary: 'blue', secondary: 'purple', gradient: 'from-blue-600 to-purple-600' }
     : { primary: 'green', secondary: 'emerald', gradient: 'from-green-600 to-emerald-600' };

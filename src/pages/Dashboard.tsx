@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useRole } from '../contexts/RoleContext';
 import { AuthGuard } from '../components/auth/AuthGuard';
 import { AuthService } from '../services/auth';
 import { Link } from 'react-router-dom';
@@ -12,6 +13,7 @@ const Dashboard: React.FC = () => {
   const { user, setUser, userRole, setUserRole, roleLoading } = useUser();
   const { assessmentData, setAssessmentData } = useAssessment();
   const { user: authUser } = useAuth();
+  const { selectedRole } = useRole();
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Sync user role with authenticated user's backend profile role
@@ -35,7 +37,7 @@ const Dashboard: React.FC = () => {
 
     try {
       // Load user profile from your backend API
-      const { user: profileUser, assessmentData } = await AuthService.loadUserProfile();
+      const { user: profileUser, assessmentData } = await AuthService.loadUserProfile(selectedRole || undefined);
 
       if (profileUser) {
         // Successfully loaded profile data
