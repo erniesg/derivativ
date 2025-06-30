@@ -4,13 +4,13 @@ const About: React.FC = () => {
   const teamMembers = [
     {
       name: 'Ali',
-      role: 'Co-Founder & AI Engineer',
+      role: 'Ex-IGCSE Student & Chief Engineer',
       description: 'Passionate about leveraging AI to revolutionize education and make learning accessible to everyone.',
       avatar: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=1'
     },
     {
       name: 'Ernie',
-      role: 'Co-Founder & Education Specialist',
+      role: 'Ex-IB Tutor & Founder',
       description: 'Former IGCSE math teacher with 8+ years of experience helping students achieve their academic goals.',
       avatar: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=1'
     }
