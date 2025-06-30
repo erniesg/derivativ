@@ -166,19 +166,19 @@ const LandingPage: React.FC = () => {
                     <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.primary}-100 rounded-xl flex items-center justify-center`}>
                       <Triangle className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.primary}-600`} />
                     </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Accurate Diagrams</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Syllabus-Compliant</p>
                   </div>
                   <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
                     <div className={`mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-${themeColors.secondary}-100 rounded-xl flex items-center justify-center`}>
                       <Square className={`w-5 h-5 sm:w-6 sm:h-6 text-${themeColors.secondary}-600`} />
                     </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Complete Worksheets</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Generate Immediately</p>
                   </div>
                   <div className="text-center space-y-2 lg:space-y-3 p-4 sm:p-0">
                     <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center">
                       <Palette className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                     </div>
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">Teaching Materials</p>
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">Multiple Formats</p>
                   </div>
                 </>
               )}
