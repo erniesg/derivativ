@@ -18,9 +18,7 @@ const Footer: React.FC = () => {
               <span className="text-lg font-semibold text-gray-900">Derivativ</span>
             </div>
             <p className="text-gray-600 text-sm leading-relaxed mb-4">
-              AI-powered math tutor for Cambridge IGCSE Mathematics.
-              Generate high-quality questions with multi-agent coordination
-              and real-time quality control.
+              Derivativ uses AI to instantly generate high-quality, curriculum-aligned math materials for personalized learning.
             </p>
             <div className="flex space-x-4">
               <a
@@ -132,18 +130,7 @@ const Footer: React.FC = () => {
             © {currentYear} Derivativ AI. Built with multi-agent coordination.
           </p>
           <div className="flex space-x-6 mt-4 sm:mt-0">
-            <a
-              href="#"
-              className="text-gray-500 hover:text-gray-700 text-sm transition-colors duration-200"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#"
-              className="text-gray-500 hover:text-gray-700 text-sm transition-colors duration-200"
-            >
-              Terms of Service
-            </a>
+            {/* Footer links removed as requested */}
           </div>
         </div>
       </div>
