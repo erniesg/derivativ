@@ -20,44 +20,6 @@ const TeacherGenerationPage: React.FC = () => {
   const [generationResult, setGenerationResult] = useState<DocumentGenerationResult | null>(null);
   const [lastRequest, setLastRequest] = useState<DocumentGenerationRequest | null>(null);
 
-  // Sync user role with authenticated user's backend profile role
-  useEffect(() => {
-    if (authUser?.role && authUser.role !== userRole) {
-      setUserRole(authUser.role);
-    }
-  }, [authUser?.role, userRole, setUserRole]);
-
-  // Show loading while role is being determined from backend profile
-  if (roleLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-          <p className="text-gray-600">Loading your profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect students to dashboard
-  if (userRole !== 'teacher') {
-    return (
-      <AuthGuard>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold text-gray-900">Access Restricted</h1>
-            <p className="text-gray-600">This page is only available to teachers.</p>
-            <button
-              onClick={() => window.location.href = '/dashboard'}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Go to Dashboard
-            </button>
-          </div>
-        </div>
-      </AuthGuard>
-    );
-  }
 
   const handleGenerate = async (request: DocumentGenerationRequest) => {
     setGenerationState('loading');
@@ -106,29 +68,27 @@ const TeacherGenerationPage: React.FC = () => {
   };
 
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Generate IGCSE Math Materials</h1>
-              <p className="text-lg text-gray-600 mt-2">
-                Create worksheets, notes, and assessments tailored to Cambridge IGCSE Mathematics curriculum
-              </p>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Generate IGCSE Math Materials</h1>
+            <p className="text-lg text-gray-600 mt-2">
+              Create worksheets, notes, and assessments tailored to Cambridge IGCSE Mathematics curriculum
+            </p>
           </div>
-
-          <div className="w-full">
-            <RichMaterialGenerator
-              onMaterialGenerated={handleRichMaterialGenerated}
-              showValidation={true}
-            />
-          </div>
-
         </div>
+
+        <div className="w-full">
+          <RichMaterialGenerator
+            onMaterialGenerated={handleRichMaterialGenerated}
+            showValidation={true}
+          />
+        </div>
+
       </div>
-    </AuthGuard>
+    </div>
   );
 };
 
