@@ -5,13 +5,11 @@ const About: React.FC = () => {
     {
       name: 'Ali',
       role: 'Ex-IGCSE Student & Chief Engineer',
-      description: 'Passionate about leveraging AI to revolutionize education and make learning accessible to everyone.',
       avatar: 'https://github.com/erniesg/derivativ/blob/main/public/ali.jpg?raw=true'
     },
     {
       name: 'Ernie',
       role: 'Ex-IB Tutor & Founder',
-      description: 'Former IGCSE math teacher with 8+ years of experience helping students achieve their academic goals.',
       avatar: 'https://github.com/erniesg/derivativ/blob/main/public/ernie.jpg?raw=true'
     }
   ];
@@ -51,9 +49,8 @@ const About: React.FC = () => {
                     className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                   />
                   <h3 className="text-2xl font-bold text-gray-900 mb-1">{member.name}</h3>
-                  <p className="text-blue-600 font-medium mb-4">{member.role}</p>
+                  <p className="text-blue-600 font-medium">{member.role}</p>
                 </div>
-                <p className="text-gray-600 leading-relaxed">{member.description}</p>
               </div>
             ))}
           </div>

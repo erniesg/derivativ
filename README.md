@@ -211,6 +211,10 @@ VITE_API_BASE_URL=http://localhost:8000
 - Maintain consistent spacing (rem units)
 - Test on mobile devices
 
+## 🔗 Related Repositories
+
+- **Backend API**: [derivativ.ai](https://github.com/erniesg/derivativ.ai) - FastAPI backend with multi-agent AI system
+
 ---
 
 **Part of the Derivativ AI Cambridge IGCSE Mathematics Platform**
