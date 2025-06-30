@@ -42,7 +42,7 @@ const Navigation: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
-              <div className="text-2xl sm:text-3xl font-bold text-black transition-colors duration-300">
+              <div className="text-2xl sm:text-3xl font-bold text-black anta-regular transition-colors duration-300">
                 ∂
               </div>
               <span className="text-lg sm:text-xl font-semibold text-gray-900">Derivativ</span>
