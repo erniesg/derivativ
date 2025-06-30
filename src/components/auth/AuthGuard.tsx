@@ -9,11 +9,11 @@ interface AuthGuardProps {
   fallbackComponent?: React.ReactNode
 }
 
-export function AuthGuard({ 
-  children, 
+export function AuthGuard({
+  children,
   title = "Sign in to continue",
   description = "Please sign in with one of the following providers to access this feature.",
-  fallbackComponent 
+  fallbackComponent
 }: AuthGuardProps) {
   const { user, loading } = useAuth()
 
@@ -32,17 +32,17 @@ export function AuthGuard({
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8 p-8">
+        <div className="max-w-md w-full space-y-4 p-6">
           <div className="text-center">
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900">
               {title}
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-gray-600">
               {description}
             </p>
           </div>
-          
-          <div className="mt-8">
+
+          <div>
             <SocialLoginButtons />
           </div>
         </div>
@@ -66,10 +66,12 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return (
-      <AuthGuard 
+      <AuthGuard
         title="Authentication Required"
         description="You need to be signed in to access this page."
-      />
+      >
+        {children}
+      </AuthGuard>
     )
   }
 
