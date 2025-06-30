@@ -59,6 +59,55 @@ class ApiService {
     }
   }
 
+  // AI API request method for Modal backend
+  private async aiRequest<T>(
+    endpoint: string, 
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    const aiApiUrl = import.meta.env.VITE_AI_API_URL || this.baseUrl;
+    const url = `${aiApiUrl}${endpoint}`;
+    
+    const defaultOptions: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    };
+
+    try {
+      const response = await fetch(url, { ...defaultOptions, ...options });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ AI API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: errorData,
+          url: url
+        });
+        throw new Error(
+          errorData.detail || 
+          errorData.message || 
+          JSON.stringify(errorData) ||
+          `HTTP ${response.status}: ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      
+      return {
+        success: true,
+        data
+      };
+    } catch (error) {
+      console.error(`AI API Request failed: ${endpoint}`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'An unknown error occurred'
+      };
+    }
+  }
+
    // Add authentication headers for authenticated requests
   private async authenticatedRequest<T>(
     endpoint: string,
@@ -111,8 +160,10 @@ class ApiService {
       detail_level: this.mapDetailLevelToBackend(request.detail_level as any)
     };
     
-    console.log('🚀 Frontend sending request to generate-markdown:', JSON.stringify(backendRequest, null, 2));
-    return this.request<DocumentGenerationResult>('/api/generation/documents/generate-markdown', {
+    console.log('🚀 Frontend sending request to Modal AI API:', JSON.stringify(backendRequest, null, 2));
+    
+    // Use Modal AI API for document generation
+    return this.aiRequest<DocumentGenerationResult>('/api/generation/documents/generate-markdown', {
       method: 'POST',
       body: JSON.stringify(backendRequest)
     });
@@ -137,7 +188,8 @@ class ApiService {
   }
 
   async generateQuestions(request: any): Promise<ApiResponse<any>> {
-    return this.request<any>('/api/questions/generate', {
+    // Use Modal AI API for question generation
+    return this.aiRequest<any>('/api/questions/generate', {
       method: 'POST',
       body: JSON.stringify(request)
     });
