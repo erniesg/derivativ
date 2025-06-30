@@ -4,12 +4,12 @@ const About: React.FC = () => {
   const teamMembers = [
     {
       name: 'Ali',
-      role: 'Ex-IGCSE Student & Chief Engineer',
+      role: 'Ex-IGCSE Student & Co-founder',
       avatar: 'https://github.com/erniesg/derivativ/blob/main/public/ali.jpg?raw=true'
     },
     {
       name: 'Ernie',
-      role: 'Ex-IB Tutor & Founder',
+      role: 'Ex-IB Tutor & Co-founder',
       avatar: 'https://github.com/erniesg/derivativ/blob/main/public/ernie.jpg?raw=true'
     }
   ];
@@ -77,7 +77,7 @@ const About: React.FC = () => {
                   </p>
                 </div>
               </li>
-              
+
               <li className="flex items-start space-x-4">
                 <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
@@ -86,7 +86,7 @@ const About: React.FC = () => {
                   </p>
                 </div>
               </li>
-              
+
               <li className="flex items-start space-x-4">
                 <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
                 <div>
