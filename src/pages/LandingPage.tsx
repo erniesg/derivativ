@@ -25,6 +25,18 @@ const LandingPage: React.FC = () => {
   const [authMode, setAuthMode] = useState<'assessment' | 'dashboard'>('dashboard');
 
   const handleAuthRequired = (mode: 'assessment' | 'dashboard') => {
+    // For teachers, skip form and go directly to generation page
+    if (userRole === 'teacher' && mode === 'dashboard') {
+      if (user) {
+        navigate('/teacher/generate');
+      } else {
+        sessionStorage.setItem('authRedirectTo', '/teacher/generate');
+        setAuthMode('dashboard');
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
     if (user) {
       // User is already authenticated, proceed directly
       if (mode === 'assessment') {
